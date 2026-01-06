@@ -2,8 +2,22 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { LogOut, User } from "lucide-react";
+
+import { useAuth } from "@/context/AuthContext";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
+    const { user, logout } = useAuth();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -50,12 +64,57 @@ export default function Navbar() {
 
                     {/* Auth Buttons */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link href="/login" className="btn-secondary">
-                            Sign In
-                        </Link>
-                        <Link href="/register" className="btn-primary">
-                            Get Started
-                        </Link>
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="relative h-10 w-10 rounded-full">
+                                        <Avatar className="h-10 w-10">
+                                            <AvatarImage src="/avatars/01.png" alt={user.name} />
+                                            <AvatarFallback className="bg-[var(--primary-100)] text-[var(--primary-700)]">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56" align="end" forceMount>
+                                    <DropdownMenuLabel className="font-normal">
+                                        <div className="flex flex-col space-y-1">
+                                            <p className="text-sm font-medium leading-none">{user.name}</p>
+                                            <p className="text-xs leading-none text-muted-foreground">
+                                                {user.email}
+                                            </p>
+                                        </div>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem>
+                                        <User className="mr-2 h-4 w-4" />
+                                        <span>Profile</span>
+                                    </DropdownMenuItem>
+                                    {user.role === "admin" && (
+                                        <DropdownMenuItem asChild>
+                                            <Link href="/admin/dashboard">
+                                                <User className="mr-2 h-4 w-4" />
+                                                <span>Admin Dashboard</span>
+                                            </Link>
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={logout}>
+                                        <LogOut className="mr-2 h-4 w-4" />
+                                        <span>Log out</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <>
+                                <Link href="/login" className="btn-secondary">
+                                    Sign In
+                                </Link>
+                                <Link href="/register" className="btn-primary">
+                                    Get Started
+                                </Link>
+                            </>
+                        )}
                     </div>
 
                     {/* Mobile Menu Button */}
@@ -106,12 +165,30 @@ export default function Navbar() {
                                 Contact
                             </Link>
                             <hr className="border-[var(--border)]" />
-                            <Link href="/login" className="btn-secondary justify-center">
-                                Sign In
-                            </Link>
-                            <Link href="/register" className="btn-primary justify-center">
-                                Get Started
-                            </Link>
+                            {user ? (
+                                <>
+                                    <div className="px-2 py-2">
+                                        <p className="font-medium">{user.name}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    </div>
+                                    <button
+                                        onClick={logout}
+                                        className="flex w-full items-center gap-2 px-2 py-2 text-red-600 hover:bg-gray-100 rounded"
+                                    >
+                                        <LogOut className="h-4 w-4" />
+                                        Sign Out
+                                    </button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link href="/login" className="btn-secondary justify-center">
+                                        Sign In
+                                    </Link>
+                                    <Link href="/register" className="btn-primary justify-center">
+                                        Get Started
+                                    </Link>
+                                </>
+                            )}
                         </div>
                     </div>
                 )}
