@@ -4,25 +4,25 @@ import { Quote, PenTool, BookOpen, Globe } from "lucide-react";
 
 export default function About() {
     return (
-        <section id="about" className="py-20 lg:py-32">
+        <section id="about" className="py-12 sm:py-16 lg:py-24">
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
+                <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
                     {/* Content Side */}
-                    <div className="space-y-6">
-                        <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] w-fit">
-                            <span className="text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
+                    <div className="space-y-4 sm:space-y-6">
+                        <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] w-fit">
+                            <span className="text-xs sm:text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
                                 About The Author
                             </span>
                         </div>
 
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight">
+                        <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold leading-tight">
                             A Journey of{" "}
                             <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-600)] to-[var(--accent-500)]">
                                 Words & Imagination
                             </span>
                         </h2>
 
-                        <div className="space-y-4 text-muted-foreground text-lg leading-relaxed">
+                        <div className="space-y-3 sm:space-y-4 text-muted-foreground text-base sm:text-lg leading-relaxed">
                             <p>
                                 Hello! I'm Henok, a passionate author dedicated to crafting stories
                                 that resonate with readers across the globe. My journey with words
@@ -37,39 +37,39 @@ export default function About() {
                         </div>
 
                         {/* Features */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center flex-shrink-0">
-                                    <PenTool className="w-5 h-5 text-white" />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 pt-3 sm:pt-4">
+                            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center flex-shrink-0">
+                                    <PenTool className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
-                                <span className="text-sm font-medium">Passionate Writer</span>
+                                <span className="text-xs sm:text-sm font-medium">Passionate Writer</span>
                             </div>
-                            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--accent-500)] to-[var(--accent-600)] flex items-center justify-center flex-shrink-0">
-                                    <BookOpen className="w-5 h-5 text-white" />
+                            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[var(--accent-500)] to-[var(--accent-600)] flex items-center justify-center flex-shrink-0">
+                                    <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
-                                <span className="text-sm font-medium">5+ Books</span>
+                                <span className="text-xs sm:text-sm font-medium">5+ Books</span>
                             </div>
-                            <div className="flex items-center gap-3 p-4 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary-500)] to-[var(--accent-500)] flex items-center justify-center flex-shrink-0">
-                                    <Globe className="w-5 h-5 text-white" />
+                            <div className="flex items-center gap-2 sm:gap-3 p-3 sm:p-4 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[var(--primary-500)] to-[var(--accent-500)] flex items-center justify-center flex-shrink-0">
+                                    <Globe className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
-                                <span className="text-sm font-medium">Ethiopia Based</span>
+                                <span className="text-xs sm:text-sm font-medium">Ethiopia Based</span>
                             </div>
                         </div>
 
                         {/* Quote */}
-                        <div className="p-6 rounded-xl bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mt-6">
-                            <div className="flex items-start gap-4">
-                                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center flex-shrink-0">
-                                    <Quote className="w-5 h-5 text-white" />
+                        <div className="p-4 sm:p-6 rounded-xl bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mt-4 sm:mt-6">
+                            <div className="flex items-start gap-3 sm:gap-4">
+                                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center flex-shrink-0">
+                                    <Quote className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                                 </div>
                                 <div>
-                                    <p className="text-lg italic text-foreground font-medium mb-2">
+                                    <p className="text-base sm:text-lg italic text-foreground font-medium mb-2">
                                         "Every story has the power to change a life. My mission is to
                                         write stories that matter."
                                     </p>
-                                    <footer className="text-[var(--primary-600)] font-semibold">
+                                    <footer className="text-[var(--primary-600)] font-semibold text-sm sm:text-base">
                                         — Henok
                                     </footer>
                                 </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, BookOpen } from "lucide-react";
+import { Search, BookOpen, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { booksService, Book } from "@/lib/services/books";
 import BookCard from "@/components/books/BookCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,52 +56,93 @@ export default function BooksPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pt-24 pb-12">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-12 animate-fade-in">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Explore Our <span className="gradient-text">Book Collection</span>
+    <div className="min-h-screen bg-background pt-20 sm:pt-24 pb-16 sm:pb-20 relative">
+      {/* Background Effects */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--primary-500)]/5 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--accent-500)]/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        {/* Header Section */}
+        <div className="text-center mb-8 sm:mb-12 lg:mb-16 pt-4 sm:pt-8">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mb-4 sm:mb-6">
+            <Sparkles className="w-3.5 h-3.5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+            <span className="text-xs sm:text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
+              Discover Amazing Stories
+            </span>
+          </div>
+
+          {/* Main Heading */}
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight px-2">
+            Explore Our{" "}
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-600)] to-[var(--accent-500)]">
+              Book Collection
+            </span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Discover a world of stories waiting to be explored
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
+            Discover a world of stories waiting to be explored. Find your next favorite read.
           </p>
         </div>
 
         {/* Search Bar */}
-        <form onSubmit={handleSearch} className="mb-8 max-w-2xl mx-auto">
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5" />
-              <Input
-                type="text"
-                placeholder="Search books by title..."
-                value={searchQuery}
-                onChange={handleSearchChange}
-                className="pl-10 h-12 text-lg"
-              />
+        <form onSubmit={handleSearch} className="mb-8 sm:mb-10 max-w-3xl mx-auto">
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary-500)]/20 to-[var(--accent-500)]/20 rounded-xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex gap-3 bg-background border border-[var(--border)] rounded-xl p-2 shadow-sm hover:shadow-md transition-all duration-300">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground w-5 h-5 z-10" />
+                <Input
+                  type="text"
+                  placeholder="Search books by title, author, or description..."
+                  value={searchQuery}
+                  onChange={handleSearchChange}
+                  className="pl-12 pr-4 h-12 sm:h-14 text-base border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+              </div>
+              <Button 
+                type="submit" 
+                size="lg" 
+                className="px-6 sm:px-8 h-12 sm:h-14 bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] text-white font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                <Search className="w-4 h-4 sm:w-5 sm:h-5 sm:mr-2" />
+                <span className="hidden sm:inline">Search</span>
+              </Button>
             </div>
-            <Button type="submit" size="lg" className="px-8">
-              Search
-            </Button>
           </div>
         </form>
 
         {/* Results Count */}
         {!loading && (
-          <div className="mb-6 text-muted-foreground">
-            Found {total} {total === 1 ? "book" : "books"}
+          <div className="mb-6 sm:mb-8 flex items-center justify-between max-w-3xl mx-auto">
+            <div className="flex items-center gap-2 text-sm sm:text-base">
+              <div className="w-2 h-2 rounded-full bg-[var(--primary-500)] animate-pulse" />
+              <span className="text-muted-foreground">
+                Found <span className="font-semibold text-foreground">{total}</span> {total === 1 ? "book" : "books"}
+                {searchQuery && (
+                  <span className="ml-2">
+                    for "<span className="font-semibold text-foreground">{searchQuery}</span>"
+                  </span>
+                )}
+              </span>
+            </div>
+            {totalPages > 1 && (
+              <div className="text-sm sm:text-base text-muted-foreground">
+                Page <span className="font-semibold text-foreground">{currentPage}</span> of <span className="font-semibold text-foreground">{totalPages}</span>
+              </div>
+            )}
           </div>
         )}
 
         {/* Books Grid */}
         {loading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {[...Array(8)].map((_, i) => (
-              <div key={i} className="card">
-                <Skeleton className="aspect-[3/4] w-full" />
-                <div className="p-6 space-y-2">
-                  <Skeleton className="h-6 w-3/4" />
+              <div key={i} className="rounded-2xl overflow-hidden border border-[var(--border)] bg-background">
+                <Skeleton className="aspect-[3/4] w-full rounded-none" />
+                <div className="p-4 sm:p-6 space-y-3">
+                  <Skeleton className="h-5 sm:h-6 w-3/4" />
                   <Skeleton className="h-4 w-full" />
                   <Skeleton className="h-4 w-2/3" />
                 </div>
@@ -110,7 +151,7 @@ export default function BooksPage() {
           </div>
         ) : books.length > 0 ? (
           <>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {books.map((book) => (
                 <BookCard key={book.id} book={book} />
               ))}
@@ -118,38 +159,90 @@ export default function BooksPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="flex justify-center items-center gap-4 mt-12">
+              <div className="flex justify-center items-center gap-3 sm:gap-4 mt-12 sm:mt-16">
                 <Button
                   variant="outline"
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
+                  className="h-10 px-4 sm:px-6 border-[var(--border)] hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all"
                 >
-                  Previous
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
-                <span className="text-muted-foreground">
-                  Page {currentPage} of {totalPages}
-                </span>
+                
+                <div className="flex items-center gap-2">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`h-10 w-10 ${
+                          currentPage === pageNum
+                            ? "bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] text-white border-0"
+                            : "border-[var(--border)] hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)]"
+                        } transition-all`}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+
                 <Button
                   variant="outline"
                   onClick={() =>
                     setCurrentPage((p) => Math.min(totalPages, p + 1))
                   }
                   disabled={currentPage === totalPages}
+                  className="h-10 px-4 sm:px-6 border-[var(--border)] hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all"
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
+                  <ChevronRight className="w-4 h-4 ml-2" />
                 </Button>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-20">
-            <BookOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-2xl font-bold mb-2">No books found</h3>
-            <p className="text-muted-foreground">
+          <div className="text-center py-16 sm:py-24 max-w-md mx-auto">
+            <div className="relative inline-block mb-6">
+              <div className="absolute inset-0 bg-[var(--primary-500)]/20 rounded-full blur-2xl" />
+              <div className="relative w-20 h-20 sm:w-24 sm:h-24 mx-auto bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] rounded-2xl flex items-center justify-center shadow-lg">
+                <BookOpen className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+              </div>
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-bold mb-3 text-foreground">
+              No books found
+            </h3>
+            <p className="text-muted-foreground text-base sm:text-lg mb-6">
               {searchQuery
-                ? "Try adjusting your search terms"
+                ? "Try adjusting your search terms or browse all books"
                 : "Check back later for new books"}
             </p>
+            {searchQuery && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("");
+                  setCurrentPage(1);
+                  fetchBooks(1, "");
+                }}
+                variant="outline"
+                className="border-[var(--border)] hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)]"
+              >
+                Clear Search
+              </Button>
+            )}
           </div>
         )}
       </div>

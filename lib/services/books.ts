@@ -27,7 +27,7 @@ export interface BookListResponse {
 }
 
 export interface BookReadResponse {
-  book_id: number;
+  book_id: string;
   title: string;
   file_url: string;
   page_count?: number;

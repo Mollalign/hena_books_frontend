@@ -34,7 +34,7 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <main className="relative">
+      <main className="relative pt-16 sm:pt-20">
         <Hero stats={stats} />
         <FeaturedBooks />
         <About />

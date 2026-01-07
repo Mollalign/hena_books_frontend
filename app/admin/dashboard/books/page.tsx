@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, BookOpen } from "lucide-react";
 import { booksService, Book } from "@/lib/services/books";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,31 +120,34 @@ export default function AdminBooksPage() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 sm:space-y-8 mt-12">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Book Management</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-foreground">
+            Book Management
+          </h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Manage all books in the platform
           </p>
         </div>
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="w-full sm:w-auto bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] text-white shadow-md">
               <Plus className="w-4 h-4 mr-2" />
               Upload Book
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Upload New Book</DialogTitle>
-              <DialogDescription>
+              <DialogTitle className="text-xl sm:text-2xl">Upload New Book</DialogTitle>
+              <DialogDescription className="text-sm sm:text-base">
                 Upload a PDF book file with optional cover image
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleUpload} className="space-y-4">
+            <form onSubmit={handleUpload} className="space-y-4 sm:space-y-6">
               <div>
-                <Label htmlFor="title">Title *</Label>
+                <Label htmlFor="title" className="text-sm font-medium">Title *</Label>
                 <Input
                   id="title"
                   value={formData.title}
@@ -152,22 +155,23 @@ export default function AdminBooksPage() {
                     setFormData({ ...formData, title: e.target.value })
                   }
                   required
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
                 <textarea
                   id="description"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
-                  className="w-full min-h-[100px] px-3 py-2 border rounded-md"
+                  className="w-full min-h-[100px] px-3 py-2 border border-[var(--border)] rounded-md bg-background text-foreground mt-1 resize-y"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="page_count">Page Count</Label>
+                  <Label htmlFor="page_count" className="text-sm font-medium">Page Count</Label>
                   <Input
                     id="page_count"
                     type="number"
@@ -175,10 +179,11 @@ export default function AdminBooksPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, page_count: e.target.value })
                     }
+                    className="mt-1"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="published_date">Published Date</Label>
+                  <Label htmlFor="published_date" className="text-sm font-medium">Published Date</Label>
                   <Input
                     id="published_date"
                     type="date"
@@ -189,21 +194,23 @@ export default function AdminBooksPage() {
                         published_date: e.target.value,
                       })
                     }
+                    className="mt-1"
                   />
                 </div>
               </div>
-              <div className="flex gap-4">
-                <label className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.is_featured}
                     onChange={(e) =>
                       setFormData({ ...formData, is_featured: e.target.checked })
                     }
+                    className="w-4 h-4 rounded border-[var(--border)]"
                   />
-                  <span>Featured</span>
+                  <span className="text-sm">Featured</span>
                 </label>
-                <label className="flex items-center gap-2">
+                <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={formData.is_published}
@@ -213,12 +220,13 @@ export default function AdminBooksPage() {
                         is_published: e.target.checked,
                       })
                     }
+                    className="w-4 h-4 rounded border-[var(--border)]"
                   />
-                  <span>Published</span>
+                  <span className="text-sm">Published</span>
                 </label>
               </div>
               <div>
-                <Label htmlFor="book_file">PDF File *</Label>
+                <Label htmlFor="book_file" className="text-sm font-medium">PDF File *</Label>
                 <Input
                   id="book_file"
                   type="file"
@@ -230,10 +238,11 @@ export default function AdminBooksPage() {
                     })
                   }
                   required
+                  className="mt-1"
                 />
               </div>
               <div>
-                <Label htmlFor="cover_file">Cover Image</Label>
+                <Label htmlFor="cover_file" className="text-sm font-medium">Cover Image</Label>
                 <Input
                   id="cover_file"
                   type="file"
@@ -244,9 +253,14 @@ export default function AdminBooksPage() {
                       cover_file: e.target.files?.[0] || null,
                     })
                   }
+                  className="mt-1"
                 />
               </div>
-              <Button type="submit" disabled={uploading} className="w-full">
+              <Button 
+                type="submit" 
+                disabled={uploading} 
+                className="w-full bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] text-white"
+              >
                 {uploading ? "Uploading..." : "Upload Book"}
               </Button>
             </form>
@@ -257,88 +271,156 @@ export default function AdminBooksPage() {
       {loading ? (
         <div className="space-y-4">
           {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))}
         </div>
-      ) : (
-        <div className="border rounded-lg">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cover</TableHead>
-                <TableHead>Title</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Pages</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {books.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    No books found. Upload your first book!
-                  </TableCell>
-                </TableRow>
-              ) : (
-                books.map((book) => (
-                  <TableRow key={book.id}>
-                    <TableCell>
-                      {book.cover_url ? (
-                        <Image
-                          src={book.cover_url}
-                          alt={book.title}
-                          width={50}
-                          height={75}
-                          className="object-cover rounded"
-                        />
-                      ) : (
-                        <div className="w-[50px] h-[75px] bg-muted rounded flex items-center justify-center">
-                          📚
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="font-medium">{book.title}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        {book.is_published && (
-                          <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
-                            Published
-                          </span>
-                        )}
-                        {book.is_featured && (
-                          <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded">
-                            Featured
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{book.page_count || "-"}</TableCell>
-                    <TableCell>
-                      {new Date(book.created_at).toLocaleDateString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Link href={`/books/${book.id}`}>
-                          <Button variant="ghost" size="sm">
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDelete(book.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+      ) : books.length === 0 ? (
+        <div className="text-center py-12 border border-[var(--border)] rounded-lg bg-background">
+          <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2 text-foreground">No books found</h3>
+          <p className="text-muted-foreground mb-4">Upload your first book to get started</p>
         </div>
+      ) : (
+        <>
+          {/* Desktop Table View */}
+          <div className="hidden lg:block border border-[var(--border)] rounded-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Cover</TableHead>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Pages</TableHead>
+                    <TableHead>Created</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {books.map((book) => (
+                    <TableRow key={book.id}>
+                      <TableCell>
+                        {book.cover_url ? (
+                          <Image
+                            src={book.cover_url}
+                            alt={book.title}
+                            width={50}
+                            height={75}
+                            className="object-cover rounded"
+                          />
+                        ) : (
+                          <div className="w-[50px] h-[75px] bg-muted rounded flex items-center justify-center">
+                            📚
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="font-medium">{book.title}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-2">
+                          {book.is_published && (
+                            <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded font-medium">
+                              Published
+                            </span>
+                          )}
+                          {book.is_featured && (
+                            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded font-medium">
+                              Featured
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>{book.page_count || "-"}</TableCell>
+                      <TableCell>
+                        {new Date(book.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/books/${book.id}`}>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(book.id)}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Trash2 className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+
+          {/* Mobile Card View */}
+          <div className="lg:hidden space-y-4">
+            {books.map((book) => (
+              <div
+                key={book.id}
+                className="border border-[var(--border)] rounded-lg p-4 bg-background space-y-4"
+              >
+                <div className="flex gap-4">
+                  {book.cover_url ? (
+                    <Image
+                      src={book.cover_url}
+                      alt={book.title}
+                      width={60}
+                      height={90}
+                      className="object-cover rounded flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-[60px] h-[90px] bg-muted rounded flex items-center justify-center flex-shrink-0">
+                      📚
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base mb-2 text-foreground line-clamp-2">
+                      {book.title}
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {book.is_published && (
+                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded font-medium">
+                          Published
+                        </span>
+                      )}
+                      {book.is_featured && (
+                        <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded font-medium">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>Pages: {book.page_count || "-"}</p>
+                      <p>Created: {new Date(book.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
+                  <Link href={`/books/${book.id}`} className="flex-1">
+                    <Button variant="outline" size="sm" className="w-full">
+                      <Eye className="w-4 h-4 mr-2" />
+                      View
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(book.id)}
+                    className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

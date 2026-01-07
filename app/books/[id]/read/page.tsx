@@ -11,18 +11,18 @@ import {
   Maximize,
   Minimize,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { booksService } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-// React-pdf CSS imports - paths may vary by version
-// import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-// import "react-pdf/dist/esm/Page/TextLayer.css";
 
-// Set up PDF.js worker
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
+// Set up PDF.js worker - use unpkg for better reliability
+if (typeof window !== "undefined") {
+  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+}
 
 export default function BookReaderPage() {
   const params = useParams();
@@ -34,7 +34,9 @@ export default function BookReaderPage() {
   const [scale, setScale] = useState(1.5);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [pdfLoading, setPdfLoading] = useState(true);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [readingTime, setReadingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -50,25 +52,44 @@ export default function BookReaderPage() {
       }
       try {
         setLoading(true);
+        setPdfError(null);
         const data = await booksService.getBookForReading(params.id as string);
+        console.log("Book data loaded:", data);
+        
+        // Validate file URL
+        if (!data.file_url) {
+          throw new Error("Book file URL is missing");
+        }
+        
+        // Check if URL is valid
+        try {
+          new URL(data.file_url);
+        } catch (urlError) {
+          throw new Error("Invalid file URL format");
+        }
+        
         setBookData(data);
 
         // Start reading session
-        // Note: Sending UUID string - backend should handle conversion
-        const session = await analyticsService.startSession({
-          book_id: params.id as string,
-        });
-        setSessionId(session.id);
-        startTimeRef.current = Date.now();
+        try {
+          const session = await analyticsService.startSession({
+            book_id: params.id as string,
+          });
+          setSessionId(session.id);
+          startTimeRef.current = Date.now();
 
-        // Start timer
-        timerRef.current = setInterval(() => {
-          setReadingTime((prev) => prev + 1);
-        }, 1000);
+          // Start timer
+          timerRef.current = setInterval(() => {
+            setReadingTime((prev) => prev + 1);
+          }, 1000);
+        } catch (sessionError: any) {
+          console.error("Failed to start session:", sessionError);
+          // Don't block reading if session fails
+        }
       } catch (error: any) {
         console.error("Failed to load book:", error);
-        toast.error("Failed to load book");
-        router.push(`/books/${params.id}`);
+        toast.error(error.response?.data?.detail || "Failed to load book");
+        setPdfError("Failed to load book. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -212,29 +233,77 @@ export default function BookReaderPage() {
       {/* PDF Viewer */}
       <div className="pt-20 pb-16 flex items-center justify-center min-h-screen">
         <div className="max-w-5xl w-full px-4">
-          <Document
-            file={bookData.file_url}
-            onLoadSuccess={({ numPages }) => setNumPages(numPages)}
-            loading={
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                <p className="text-gray-400">Loading page...</p>
-              </div>
-            }
-            error={
-              <div className="text-center text-red-400">
-                <p>Failed to load PDF</p>
-              </div>
-            }
-          >
-            <Page
-              pageNumber={pageNumber}
-              scale={scale}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-              className="shadow-2xl"
-            />
-          </Document>
+          {pdfError ? (
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+              <p className="text-red-400 text-lg mb-2">{pdfError}</p>
+              <Button
+                onClick={() => {
+                  setPdfError(null);
+                  setPdfLoading(true);
+                  window.location.reload();
+                }}
+                className="mt-4"
+              >
+                Retry
+              </Button>
+            </div>
+          ) : (
+            <Document
+              file={bookData.file_url}
+              onLoadSuccess={({ numPages }) => {
+                console.log("PDF loaded successfully, pages:", numPages);
+                setNumPages(numPages);
+                setPdfLoading(false);
+                setPdfError(null);
+              }}
+              onLoadError={(error) => {
+                console.error("PDF load error:", error);
+                setPdfError("Failed to load PDF. The file may be corrupted or inaccessible.");
+                setPdfLoading(false);
+                toast.error("Failed to load PDF file");
+              }}
+              loading={
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                  <p className="text-gray-400">Loading PDF...</p>
+                  <p className="text-gray-500 text-sm mt-2 break-all">{bookData.file_url}</p>
+                </div>
+              }
+              options={{
+                cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                cMapPacked: true,
+                standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+                httpHeaders: {},
+              }}
+            >
+              {pdfLoading && (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
+                  <p className="text-gray-400 text-sm">Rendering page...</p>
+                </div>
+              )}
+              <Page
+                pageNumber={pageNumber}
+                scale={scale}
+                renderTextLayer={true}
+                renderAnnotationLayer={true}
+                className="shadow-2xl"
+                onLoadSuccess={() => {
+                  setPdfLoading(false);
+                }}
+                onRenderError={(error) => {
+                  console.error("Page render error:", error);
+                  setPdfError("Failed to render page. Please try again.");
+                }}
+                loading={
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                  </div>
+                }
+              />
+            </Document>
+          )}
         </div>
       </div>
 

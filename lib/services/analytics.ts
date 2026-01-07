@@ -1,9 +1,9 @@
 import api from "@/lib/api";
 
 export interface ReadingSession {
-  id: number;
-  user_id: number;
-  book_id: number;
+  id: string;
+  user_id: string;
+  book_id: string;
   started_at: string;
   ended_at?: string;
   last_page_read: number;
@@ -11,7 +11,7 @@ export interface ReadingSession {
 }
 
 export interface ReadingSessionCreate {
-  book_id: number | string; // Backend expects number but books use UUID
+  book_id: string;
 }
 
 export interface ReadingSessionUpdate {
@@ -30,7 +30,7 @@ export interface OverviewStats {
 }
 
 export interface BookStats {
-  book_id: number;
+  book_id: string;
   title: string;
   cover_url?: string;
   total_readers: number;
@@ -40,7 +40,7 @@ export interface BookStats {
 }
 
 export interface ReaderActivity {
-  user_id: number;
+  user_id: string;
   user_name: string;
   email: string;
   books_read: number;
@@ -52,7 +52,7 @@ export const analyticsService = {
   // Start reading session
   async startSession(data: ReadingSessionCreate): Promise<ReadingSession> {
     const response = await api.post<ReadingSession>(
-      "/analytics/reading/start",
+      "/reading/start",
       data
     );
     return response.data;
@@ -60,20 +60,20 @@ export const analyticsService = {
 
   // Update reading progress
   async updateProgress(
-    sessionId: number,
+    sessionId: string,
     data: ReadingSessionUpdate
   ): Promise<ReadingSession> {
     const response = await api.put<ReadingSession>(
-      `/analytics/reading/${sessionId}/update`,
+      `/reading/${sessionId}/update`,
       data
     );
     return response.data;
   },
 
   // End reading session
-  async endSession(sessionId: number): Promise<ReadingSession> {
+  async endSession(sessionId: string): Promise<ReadingSession> {
     const response = await api.post<ReadingSession>(
-      `/analytics/reading/${sessionId}/end`
+      `/reading/${sessionId}/end`
     );
     return response.data;
   },
@@ -81,7 +81,7 @@ export const analyticsService = {
   // Admin: Get overview stats
   async getOverviewStats(): Promise<OverviewStats> {
     const response = await api.get<OverviewStats>(
-      "/analytics/admin/analytics/overview"
+      "/admin/analytics/overview"
     );
     return response.data;
   },
@@ -89,7 +89,7 @@ export const analyticsService = {
   // Admin: Get book statistics
   async getBookStats(): Promise<BookStats[]> {
     const response = await api.get<BookStats[]>(
-      "/analytics/admin/analytics/books"
+      "/admin/analytics/books"
     );
     return response.data;
   },
@@ -97,7 +97,7 @@ export const analyticsService = {
   // Admin: Get reader activity
   async getReaderActivity(limit: number = 20): Promise<ReaderActivity[]> {
     const response = await api.get<ReaderActivity[]>(
-      "/analytics/admin/analytics/readers",
+      "/admin/analytics/readers",
       { params: { limit } }
     );
     return response.data;
