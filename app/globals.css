@@ -1,6 +1,5 @@
 @import "tailwindcss";
 
-
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -114,12 +113,7 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
+/* Base Styles - Less aggressive reset */
 html {
   scroll-behavior: smooth;
 }
@@ -129,6 +123,8 @@ body {
   line-height: 1.6;
   overflow-x: hidden;
 }
+
+/* Utility Classes - Keep these for component styling */
 
 /* Gradient Text */
 .gradient-text {
@@ -146,7 +142,33 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Primary Button */
+/* Enhanced Glass Effect */
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+}
+
+.dark .glass-card {
+  background: rgba(26, 26, 46, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-light {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(15px) saturate(180%);
+  -webkit-backdrop-filter: blur(15px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.dark .glass-light {
+  background: rgba(26, 26, 46, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Button Styles - Optional utility classes */
 .btn-primary {
   background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
   color: white;
@@ -166,7 +188,6 @@ body {
   box-shadow: 0 10px 20px rgba(124, 58, 237, 0.3);
 }
 
-/* Secondary Button */
 .btn-secondary {
   background: transparent;
   color: var(--foreground);
@@ -200,6 +221,13 @@ body {
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
+/* Glass Card Hover Effect */
+.glass-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 60px rgba(124, 58, 237, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
 /* Animated Background */
 .animated-bg {
   position: relative;
@@ -222,7 +250,6 @@ body {
   from {
     transform: rotate(0deg);
   }
-
   to {
     transform: rotate(360deg);
   }
@@ -234,7 +261,6 @@ body {
     opacity: 0;
     transform: translateY(30px);
   }
-
   to {
     opacity: 1;
     transform: translateY(0);
@@ -247,12 +273,9 @@ body {
 
 /* Floating Animation */
 @keyframes float {
-
-  0%,
-  100% {
+  0%, 100% {
     transform: translateY(0);
   }
-
   50% {
     transform: translateY(-10px);
   }
@@ -262,7 +285,7 @@ body {
   animation: float 3s ease-in-out infinite;
 }
 
-/* Section Padding */
+/* Section Padding - Optional utility */
 .section {
   padding: 5rem 1.5rem;
 }
@@ -271,13 +294,6 @@ body {
   .section {
     padding: 6rem 2rem;
   }
-}
-
-/* Container */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1rem;
 }
 
 /* Nav Styles */
@@ -291,6 +307,7 @@ body {
   color: var(--primary-500);
 }
 
+/* Dark Mode */
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
