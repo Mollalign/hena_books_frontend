@@ -136,71 +136,71 @@ export default function AdminDashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {loading
             ? [...Array(4)].map((_, i) => (
-                <Card key={i} className="border border-[var(--border)] bg-background/50 backdrop-blur-sm">
-                  <CardContent className="p-6">
-                    <Skeleton className="h-4 w-24 mb-4" />
-                    <Skeleton className="h-10 w-20 mb-2" />
-                    <Skeleton className="h-4 w-16" />
-                  </CardContent>
-                </Card>
-              ))
+              <Card key={i} className="border border-[var(--border)] bg-background/50 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <Skeleton className="h-4 w-24 mb-4" />
+                  <Skeleton className="h-10 w-20 mb-2" />
+                  <Skeleton className="h-4 w-16" />
+                </CardContent>
+              </Card>
+            ))
             : statCards.map((stat, index) => {
-                const Icon = stat.icon;
-                const colorClasses = {
-                  primary: {
-                    bg: "bg-[var(--primary-500)]",
-                    light: "bg-[var(--primary-50)] dark:bg-[var(--primary-950)]",
-                    text: "text-[var(--primary-500)]",
-                  },
-                  accent: {
-                    bg: "bg-[var(--accent-500)]",
-                    light: "bg-[var(--accent-50)] dark:bg-[var(--accent-950)]",
-                    text: "text-[var(--accent-500)]",
-                  },
-                  emerald: {
-                    bg: "bg-emerald-500",
-                    light: "bg-emerald-50 dark:bg-emerald-950",
-                    text: "text-emerald-500",
-                  },
-                  violet: {
-                    bg: "bg-violet-500",
-                    light: "bg-violet-50 dark:bg-violet-950",
-                    text: "text-violet-500",
-                  },
-                }[stat.color];
+              const Icon = stat.icon;
+              const colorClasses = {
+                primary: {
+                  bg: "bg-[var(--primary-500)]",
+                  light: "bg-[var(--primary-50)] dark:bg-[var(--primary-950)]",
+                  text: "text-[var(--primary-500)]",
+                },
+                accent: {
+                  bg: "bg-[var(--accent-500)]",
+                  light: "bg-[var(--accent-50)] dark:bg-[var(--accent-950)]",
+                  text: "text-[var(--accent-500)]",
+                },
+                emerald: {
+                  bg: "bg-emerald-500",
+                  light: "bg-emerald-50 dark:bg-emerald-950",
+                  text: "text-emerald-500",
+                },
+                violet: {
+                  bg: "bg-violet-500",
+                  light: "bg-violet-50 dark:bg-violet-950",
+                  text: "text-violet-500",
+                },
+              }[stat.color];
 
-                return (
-                  <Card
-                    key={stat.title}
-                    className="group border border-[var(--border)] bg-background/80 backdrop-blur-sm hover:shadow-xl hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-800)] transition-all duration-300 hover:-translate-y-1 overflow-hidden"
-                    style={{ animationDelay: `${index * 100}ms` }}
-                  >
-                    <CardContent className="p-6 relative">
-                      {/* Background decoration */}
-                      <div className={`absolute -top-12 -right-12 w-32 h-32 ${colorClasses?.light} rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500`} />
-                      
-                      <div className="relative">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className={`p-3 rounded-xl ${colorClasses?.light}`}>
-                            <Icon className={`w-6 h-6 ${colorClasses?.text}`} />
-                          </div>
-                          <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                            <ArrowUpRight className="w-3 h-3" />
-                            <span>{stat.change}</span>
-                          </div>
+              return (
+                <Card
+                  key={stat.title}
+                  className="group border border-[var(--border)] bg-background/80 backdrop-blur-sm hover:shadow-xl hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-800)] transition-all duration-300 hover:-translate-y-1 overflow-hidden"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <CardContent className="p-6 relative">
+                    {/* Background decoration */}
+                    <div className={`absolute -top-12 -right-12 w-32 h-32 ${colorClasses?.light} rounded-full opacity-50 group-hover:scale-150 transition-transform duration-500`} />
+
+                    <div className="relative">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className={`p-3 rounded-xl ${colorClasses?.light}`}>
+                          <Icon className={`w-6 h-6 ${colorClasses?.text}`} />
                         </div>
-                        
-                        <div className="space-y-1">
-                          <p className="text-sm text-muted-foreground">{stat.title}</p>
-                          <p className="text-3xl font-bold text-foreground tracking-tight">
-                            {stat.value}
-                          </p>
+                        <div className="flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                          <ArrowUpRight className="w-3 h-3" />
+                          <span>{stat.change}</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">{stat.title}</p>
+                        <p className="text-3xl font-bold text-foreground tracking-tight">
+                          {stat.value}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
         </div>
 
         {/* Activity Section */}
@@ -320,7 +320,7 @@ export default function AdminDashboardPage() {
 
                       {/* Action */}
                       <Link
-                        href={`/books/${stats.most_popular_book.id}`}
+                        href={`/books/${stats.most_popular_book.book_id}`}
                         className="inline-flex items-center gap-2 text-[var(--primary-500)] hover:text-[var(--primary-600)] font-medium transition-colors"
                       >
                         <span>View Book Details</span>
