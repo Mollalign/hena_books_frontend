@@ -29,6 +29,7 @@ export default function BookReaderPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [bookData, setBookData] = useState<any>(null);
+  const [pdfFile, setPdfFile] = useState<string | ArrayBuffer | null>(null);
   const [numPages, setNumPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState(1);
   const [scale, setScale] = useState(1.5);
@@ -69,6 +70,34 @@ export default function BookReaderPage() {
         }
         
         setBookData(data);
+        
+        // Use backend proxy endpoint to avoid CORS issues
+        // Fetch PDF through API with authentication
+        try {
+          const token = localStorage.getItem("token");
+          const proxyUrl = `http://localhost:8000/api/v1/books/${params.id}/read/file`;
+          console.log("Fetching PDF from proxy:", proxyUrl);
+          
+          const response = await fetch(proxyUrl, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch PDF: ${response.status}`);
+          }
+          
+          const blob = await response.blob();
+          const arrayBuffer = await blob.arrayBuffer();
+          setPdfFile(arrayBuffer);
+          console.log("PDF loaded successfully via proxy");
+        } catch (proxyError: any) {
+          console.error("Proxy fetch error:", proxyError);
+          // Fallback to direct Cloudinary URL
+          console.log("Falling back to direct Cloudinary URL");
+          setPdfFile(data.file_url);
+        }
 
         // Start reading session
         try {
@@ -248,9 +277,9 @@ export default function BookReaderPage() {
                 Retry
               </Button>
             </div>
-          ) : (
+          ) : pdfFile ? (
             <Document
-              file={bookData.file_url}
+              file={pdfFile}
               onLoadSuccess={({ numPages }) => {
                 console.log("PDF loaded successfully, pages:", numPages);
                 setNumPages(numPages);
@@ -259,7 +288,13 @@ export default function BookReaderPage() {
               }}
               onLoadError={(error) => {
                 console.error("PDF load error:", error);
-                setPdfError("Failed to load PDF. The file may be corrupted or inaccessible.");
+                const errorMessage = error.message || "Unknown error";
+                console.error("Error details:", {
+                  message: errorMessage,
+                  name: error.name,
+                  stack: error.stack,
+                });
+                setPdfError(`Failed to load PDF: ${errorMessage}. The file may be corrupted or inaccessible.`);
                 setPdfLoading(false);
                 toast.error("Failed to load PDF file");
               }}
@@ -267,7 +302,7 @@ export default function BookReaderPage() {
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
                   <p className="text-gray-400">Loading PDF...</p>
-                  <p className="text-gray-500 text-sm mt-2 break-all">{bookData.file_url}</p>
+                  <p className="text-gray-500 text-sm mt-2 break-all max-w-2xl mx-auto">{bookData.file_url}</p>
                 </div>
               }
               options={{
@@ -275,6 +310,7 @@ export default function BookReaderPage() {
                 cMapPacked: true,
                 standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
                 httpHeaders: {},
+                withCredentials: false,
               }}
             >
               {pdfLoading && (
@@ -303,6 +339,11 @@ export default function BookReaderPage() {
                 }
               />
             </Document>
+          ) : (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+              <p className="text-gray-400">Preparing PDF...</p>
+            </div>
           )}
         </div>
       </div>
