@@ -1,0 +1,250 @@
+{
+  "common": {
+    "appName": "Hena Books",
+    "tagline": "Biblical Resources",
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "or": "or"
+  },
+  "nav": {
+    "home": "Home",
+    "books": "Books",
+    "about": "About",
+    "contact": "Contact",
+    "profile": "Profile",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "getStarted": "Get Started",
+    "adminDashboard": "Admin Dashboard"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "name": "Full Name",
+    "forgotPassword": "Forgot Password?",
+    "resetPassword": "Reset Password",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "createAccount": "Create Account",
+    "welcomeBack": "Welcome Back",
+    "joinUs": "Join Our Community",
+    "loginSuccess": "Successfully logged in!",
+    "logoutSuccess": "Logged out successfully",
+    "registerSuccess": "Account created successfully!",
+    "invalidCredentials": "Invalid email or password",
+    "passwordMismatch": "Passwords do not match",
+    "passwordMinLength": "Password must be at least 8 characters"
+  },
+  "home": {
+    "hero": {
+      "badge": "Your Spiritual Library",
+      "title": "Discover God's Word",
+      "titleHighlight": "Through Sacred Literature",
+      "subtitle": "Explore our curated collection of biblical books, devotionals, and theological resources to deepen your faith journey.",
+      "exploreBooks": "Explore Books",
+      "learnMore": "Learn More"
+    },
+    "featured": {
+      "badge": "Featured Collection",
+      "title": "Recommended",
+      "titleHighlight": "Readings",
+      "subtitle": "Handpicked books to strengthen your spiritual journey",
+      "exploreAll": "Explore All Books"
+    },
+    "categories": {
+      "title": "Browse by Category",
+      "subtitle": "Find resources that match your spiritual interests",
+      "biblicalStudies": "Biblical Studies",
+      "devotional": "Devotional",
+      "theology": "Theology",
+      "christianLiving": "Christian Living",
+      "prayer": "Prayer & Worship",
+      "apologetics": "Apologetics"
+    },
+    "verse": {
+      "title": "Daily Verse",
+      "verse": "Your word is a lamp for my feet, a light on my path.",
+      "reference": "Psalm 119:105"
+    },
+    "cta": {
+      "title": "Start Your Faith Journey",
+      "titleHighlight": "Today",
+      "subtitle": "Join thousands of believers exploring God's word through our carefully curated biblical resources.",
+      "joinFree": "Join Free Today",
+      "browseLibrary": "Browse Library"
+    }
+  },
+  "books": {
+    "title": "Book Library",
+    "subtitle": "Explore our collection of biblical resources",
+    "searchPlaceholder": "Search books...",
+    "filterByCategory": "Filter by Category",
+    "allCategories": "All Categories",
+    "noBooks": "No books found",
+    "noBooksDesc": "Try adjusting your search or filter criteria",
+    "pages": "pages",
+    "readNow": "Read Now",
+    "download": "Download",
+    "backToHome": "Back to Home",
+    "author": "Author",
+    "category": "Category",
+    "scriptureFocus": "Scripture Focus",
+    "publishedDate": "Published Date",
+    "featured": "Featured",
+    "published": "Published",
+    "draft": "Draft"
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Manage your account information and view your reading journey",
+    "myAccount": "My Account",
+    "editProfile": "Edit Profile",
+    "displayName": "Display Name",
+    "security": "Security",
+    "changePassword": "Change Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "passwordsMatch": "Passwords match",
+    "passwordsNoMatch": "Passwords do not match",
+    "updatePassword": "Update Password",
+    "accountInfo": "Account Information",
+    "emailAddress": "Email Address",
+    "accountStatus": "Account Status",
+    "active": "Active",
+    "member": "Member",
+    "administrator": "Administrator",
+    "booksRead": "Books Read",
+    "readingTime": "Reading Time",
+    "sessions": "Sessions",
+    "profileUpdated": "Profile updated successfully",
+    "passwordChanged": "Password changed successfully"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Dashboard",
+      "overview": "Overview",
+      "welcome": "Welcome back",
+      "subtitle": "Here's what's happening with your platform",
+      "totalUsers": "Total Users",
+      "totalBooks": "Total Books",
+      "readingSessions": "Reading Sessions",
+      "totalReadingTime": "Total Reading Time",
+      "activeToday": "Active Today",
+      "activeWeek": "Active This Week",
+      "mostPopularBook": "Most Popular Book",
+      "readers": "Readers",
+      "hours": "Hours",
+      "manageBooks": "Manage Books",
+      "viewAnalytics": "View Analytics"
+    },
+    "books": {
+      "title": "Book Collection",
+      "subtitle": "books in your library",
+      "uploadBook": "Upload Book",
+      "uploadNew": "Upload New Book",
+      "addResource": "Add a biblical resource to your library",
+      "bookTitle": "Book Title",
+      "author": "Author",
+      "category": "Category",
+      "scriptureFocus": "Scripture Focus",
+      "scriptureFocusHelp": "Key Bible verses this book focuses on",
+      "description": "Description",
+      "pageCount": "Page Count",
+      "publishedDate": "Published Date",
+      "pdfFile": "PDF File",
+      "coverImage": "Cover Image",
+      "featuredBook": "Featured Book",
+      "uploadSuccess": "Book uploaded successfully",
+      "deleteBook": "Delete Book",
+      "deleteConfirm": "Are you sure you want to delete this book?",
+      "deleteWarning": "This action cannot be undone and will permanently remove the book and all associated data.",
+      "deleted": "deleted successfully"
+    },
+    "users": {
+      "title": "Community Members",
+      "subtitle": "Manage your platform users and their permissions",
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users",
+      "administrators": "Administrators",
+      "searchUsers": "Search users by name or email...",
+      "noUsers": "No users yet",
+      "noUsersDesc": "Users will appear here once they register on the platform",
+      "deleteUser": "Delete User",
+      "deleteConfirm": "Are you sure you want to delete this user?",
+      "deleteWarning": "All associated data including reading history will be permanently removed.",
+      "joined": "Joined",
+      "role": "Role",
+      "status": "Status"
+    },
+    "analytics": {
+      "title": "Platform Insights",
+      "subtitle": "Detailed insights into book performance and reader engagement",
+      "bookPerformance": "Book Performance",
+      "booksTracked": "books tracked",
+      "readerActivity": "Reader Activity",
+      "activeReaders": "active readers",
+      "performance": "Performance",
+      "avgPages": "Avg Pages",
+      "noData": "No Reading Data",
+      "noDataDesc": "Statistics will appear once users start reading"
+    }
+  },
+  "footer": {
+    "newsletter": {
+      "title": "Stay Connected in Faith",
+      "subtitle": "Receive weekly devotionals, new book alerts, and spiritual insights.",
+      "placeholder": "Enter your email",
+      "subscribe": "Subscribe"
+    },
+    "quickLinks": "Quick Links",
+    "categories": "Categories",
+    "connect": "Connect",
+    "about": {
+      "title": "About Hena Books",
+      "description": "We are dedicated to spreading the Gospel through quality biblical literature. Our mission is to make God's word accessible to everyone."
+    },
+    "copyright": "All rights reserved.",
+    "verse": "Go therefore and make disciples of all nations",
+    "verseRef": "Matthew 28:19"
+  },
+  "about": {
+    "badge": "Our Mission",
+    "title": "Spreading the",
+    "titleHighlight": "Gospel",
+    "subtitle": "We believe in the power of God's Word to transform lives. Our mission is to provide accessible, high-quality biblical resources to believers worldwide.",
+    "verse": "For the word of God is alive and active.",
+    "verseRef": "Hebrews 4:12",
+    "features": {
+      "curated": {
+        "title": "Curated Collection",
+        "description": "Carefully selected biblical resources from trusted authors and theologians"
+      },
+      "accessible": {
+        "title": "Always Accessible",
+        "description": "Read anytime, anywhere with our easy-to-use digital platform"
+      },
+      "community": {
+        "title": "Faith Community",
+        "description": "Join thousands of believers on their spiritual growth journey"
+      }
+    }
+  }
+}

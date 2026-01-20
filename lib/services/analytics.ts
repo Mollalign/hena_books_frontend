@@ -48,6 +48,12 @@ export interface ReaderActivity {
   last_active: string;
 }
 
+export interface UserReadingStats {
+  total_books_read: number;
+  total_reading_time_hours: number;
+  total_sessions: number;
+}
+
 export const analyticsService = {
   // Start reading session
   async startSession(data: ReadingSessionCreate): Promise<ReadingSession> {
@@ -100,6 +106,12 @@ export const analyticsService = {
       "/admin/analytics/readers",
       { params: { limit } }
     );
+    return response.data;
+  },
+
+  // Get current user's reading stats
+  async getMyReadingStats(): Promise<UserReadingStats> {
+    const response = await api.get<UserReadingStats>("/reading/my-stats");
     return response.data;
   },
 };

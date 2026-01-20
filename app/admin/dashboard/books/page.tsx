@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, BookOpen, User, Tag, AlertTriangle } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, BookOpen, User, Tag, AlertTriangle, Search, Filter, Upload, Grid3X3, List, Sparkles } from "lucide-react";
 import { booksService, Book, BookCategory, BOOK_CATEGORIES, getCategoryLabel } from "@/lib/services/books";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,12 +39,15 @@ import Link from "next/link";
 
 export default function AdminBooksPage() {
   const [books, setBooks] = useState<Book[]>([]);
+  const [filteredBooks, setFilteredBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const [formData, setFormData] = useState({
     title: "",
@@ -64,11 +67,26 @@ export default function AdminBooksPage() {
     fetchBooks();
   }, []);
 
+  useEffect(() => {
+    if (searchQuery) {
+      const filtered = books.filter(
+        (book) =>
+          book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          book.author?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          getCategoryLabel(book.category).toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredBooks(filtered);
+    } else {
+      setFilteredBooks(books);
+    }
+  }, [searchQuery, books]);
+
   const fetchBooks = async () => {
     try {
       setLoading(true);
       const data = await booksService.getAllBooks();
       setBooks(data);
+      setFilteredBooks(data);
     } catch (error: any) {
       console.error("Failed to fetch books:", error);
       toast.error("Failed to load books");
@@ -88,11 +106,9 @@ export default function AdminBooksPage() {
       setUploading(true);
       const uploadFormData = new FormData();
       
-      // Required fields
       uploadFormData.append("title", formData.title);
       uploadFormData.append("book_file", formData.book_file);
       
-      // Optional string fields - only append if not empty
       if (formData.author) {
         uploadFormData.append("author", formData.author);
       }
@@ -106,19 +122,15 @@ export default function AdminBooksPage() {
         uploadFormData.append("published_date", formData.published_date);
       }
       
-      // Category - always send
       uploadFormData.append("category", formData.category);
       
-      // Page count - only if valid number
       if (formData.page_count && parseInt(formData.page_count) > 0) {
         uploadFormData.append("page_count", formData.page_count);
       }
       
-      // Boolean fields
       uploadFormData.append("is_featured", formData.is_featured ? "true" : "false");
       uploadFormData.append("is_published", formData.is_published ? "true" : "false");
       
-      // Cover file - only if selected
       if (formData.cover_file) {
         uploadFormData.append("cover_file", formData.cover_file);
       }
@@ -143,12 +155,10 @@ export default function AdminBooksPage() {
     } catch (error: any) {
       console.error("Failed to upload book:", error);
       
-      // Handle FastAPI validation errors (422)
       let errorMessage = "Failed to upload book";
       if (error.response?.data?.detail) {
         const detail = error.response.data.detail;
         if (Array.isArray(detail)) {
-          // FastAPI validation error format: [{loc: [...], msg: "...", type: "..."}]
           errorMessage = detail.map((err: any) => {
             const field = err.loc?.slice(-1)[0] || "field";
             return `${field}: ${err.msg}`;
@@ -188,355 +198,446 @@ export default function AdminBooksPage() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 mt-12">
+    <div className="space-y-8 mt-12">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-foreground font-serif">
-            Book Management
-          </h1>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Manage all biblical resources in the platform
-          </p>
-        </div>
-        <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white shadow-md">
-              <Plus className="w-4 h-4 mr-2" />
-              Upload Book
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl font-serif">Upload New Book</DialogTitle>
-              <DialogDescription className="text-sm sm:text-base">
-                Upload a biblical resource with PDF file and optional cover image
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleUpload} className="space-y-4 sm:space-y-6">
-              <div>
-                <Label htmlFor="title" className="text-sm font-medium">Title *</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="e.g., The Purpose Driven Life"
-                  required
-                  className="mt-1"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="author" className="text-sm font-medium">Author</Label>
-                  <Input
-                    id="author"
-                    value={formData.author}
-                    onChange={(e) =>
-                      setFormData({ ...formData, author: e.target.value })
-                    }
-                    placeholder="e.g., Rick Warren"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
-                  <select
-                    id="category"
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value as BookCategory })
-                    }
-                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-md bg-background text-foreground"
-                    required
-                  >
-                    {BOOK_CATEGORIES.map((cat) => (
-                      <option key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <Label htmlFor="scripture_focus" className="text-sm font-medium">Scripture Focus</Label>
-                <Input
-                  id="scripture_focus"
-                  value={formData.scripture_focus}
-                  onChange={(e) =>
-                    setFormData({ ...formData, scripture_focus: e.target.value })
-                  }
-                  placeholder="e.g., Romans 8:28, Philippians 4:13"
-                  className="mt-1"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Key Bible verses this book focuses on
-                </p>
-              </div>
-              
-              <div>
-                <Label htmlFor="description" className="text-sm font-medium">Description</Label>
-                <textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Describe the book's content and spiritual value..."
-                  className="w-full min-h-[100px] px-3 py-2 border border-[var(--border)] rounded-md bg-background text-foreground mt-1 resize-y"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="page_count" className="text-sm font-medium">Page Count</Label>
-                  <Input
-                    id="page_count"
-                    type="number"
-                    value={formData.page_count}
-                    onChange={(e) =>
-                      setFormData({ ...formData, page_count: e.target.value })
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="published_date" className="text-sm font-medium">Published Date</Label>
-                  <Input
-                    id="published_date"
-                    type="date"
-                    value={formData.published_date}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        published_date: e.target.value,
-                      })
-                    }
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_featured}
-                    onChange={(e) =>
-                      setFormData({ ...formData, is_featured: e.target.checked })
-                    }
-                    className="w-4 h-4 rounded border-[var(--border)]"
-                  />
-                  <span className="text-sm">Featured</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.is_published}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        is_published: e.target.checked,
-                      })
-                    }
-                    className="w-4 h-4 rounded border-[var(--border)]"
-                  />
-                  <span className="text-sm">Published</span>
-                </label>
-              </div>
-              
-              <div>
-                <Label htmlFor="book_file" className="text-sm font-medium">PDF File *</Label>
-                <Input
-                  id="book_file"
-                  type="file"
-                  accept=".pdf"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      book_file: e.target.files?.[0] || null,
-                    })
-                  }
-                  required
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="cover_file" className="text-sm font-medium">Cover Image</Label>
-                <Input
-                  id="cover_file"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      cover_file: e.target.files?.[0] || null,
-                    })
-                  }
-                  className="mt-1"
-                />
-              </div>
-              
-              <Button 
-                type="submit" 
-                disabled={uploading} 
-                className="w-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white"
-              >
-                {uploading ? "Uploading..." : "Upload Book"}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mb-3">
+              <BookOpen className="w-4 h-4 text-[var(--primary-500)]" />
+              <span className="text-xs font-medium text-[var(--primary-600)] dark:text-[var(--primary-400)]">
+                Library Management
+              </span>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-foreground tracking-tight">
+              Book Collection
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {books.length} {books.length === 1 ? "book" : "books"} in your library
+            </p>
+          </div>
+          
+          <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white shadow-lg shadow-[var(--primary-500)]/25 hover:shadow-xl hover:shadow-[var(--primary-500)]/30 hover:-translate-y-0.5 transition-all">
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Book
               </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="p-2.5 rounded-xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] shadow-lg">
+                    <Upload className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <DialogTitle className="text-xl">Upload New Book</DialogTitle>
+                    <DialogDescription className="text-sm">
+                      Add a biblical resource to your library
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              
+              <form onSubmit={handleUpload} className="space-y-6 pt-4">
+                {/* Title */}
+                <div className="space-y-2">
+                  <Label htmlFor="title" className="text-sm font-semibold">
+                    Book Title <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="title"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="e.g., The Purpose Driven Life"
+                    required
+                    className="h-11"
+                  />
+                </div>
+                
+                {/* Author & Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="author" className="text-sm font-semibold">Author</Label>
+                    <Input
+                      id="author"
+                      value={formData.author}
+                      onChange={(e) => setFormData({ ...formData, author: e.target.value })}
+                      placeholder="e.g., Rick Warren"
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="category" className="text-sm font-semibold">
+                      Category <span className="text-destructive">*</span>
+                    </Label>
+                    <select
+                      id="category"
+                      value={formData.category}
+                      onChange={(e) => setFormData({ ...formData, category: e.target.value as BookCategory })}
+                      className="w-full h-11 px-3 border border-[var(--border)] rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-all"
+                      required
+                    >
+                      {BOOK_CATEGORIES.map((cat) => (
+                        <option key={cat.value} value={cat.value}>
+                          {cat.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Scripture Focus */}
+                <div className="space-y-2">
+                  <Label htmlFor="scripture_focus" className="text-sm font-semibold">Scripture Focus</Label>
+                  <Input
+                    id="scripture_focus"
+                    value={formData.scripture_focus}
+                    onChange={(e) => setFormData({ ...formData, scripture_focus: e.target.value })}
+                    placeholder="e.g., Romans 8:28, Philippians 4:13"
+                    className="h-11"
+                  />
+                  <p className="text-xs text-muted-foreground">Key Bible verses this book focuses on</p>
+                </div>
+                
+                {/* Description */}
+                <div className="space-y-2">
+                  <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
+                  <textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Describe the book's content and spiritual value..."
+                    className="w-full min-h-[120px] px-3 py-3 border border-[var(--border)] rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-all resize-y"
+                  />
+                </div>
+                
+                {/* Page Count & Published Date */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="page_count" className="text-sm font-semibold">Page Count</Label>
+                    <Input
+                      id="page_count"
+                      type="number"
+                      value={formData.page_count}
+                      onChange={(e) => setFormData({ ...formData, page_count: e.target.value })}
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="published_date" className="text-sm font-semibold">Published Date</Label>
+                    <Input
+                      id="published_date"
+                      type="date"
+                      value={formData.published_date}
+                      onChange={(e) => setFormData({ ...formData, published_date: e.target.value })}
+                      className="h-11"
+                    />
+                  </div>
+                </div>
+                
+                {/* Checkboxes */}
+                <div className="flex flex-wrap gap-6 p-4 rounded-xl bg-[var(--muted)]/50">
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_featured}
+                        onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                        className="peer sr-only"
+                      />
+                      <div className="w-5 h-5 rounded border-2 border-[var(--border)] peer-checked:bg-[var(--accent-500)] peer-checked:border-[var(--accent-500)] transition-all flex items-center justify-center">
+                        <Sparkles className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium">Featured Book</span>
+                  </label>
+                  <label className="flex items-center gap-3 cursor-pointer group">
+                    <div className="relative">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_published}
+                        onChange={(e) => setFormData({ ...formData, is_published: e.target.checked })}
+                        className="peer sr-only"
+                      />
+                      <div className="w-5 h-5 rounded border-2 border-[var(--border)] peer-checked:bg-emerald-500 peer-checked:border-emerald-500 transition-all flex items-center justify-center">
+                        <Eye className="w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity" />
+                      </div>
+                    </div>
+                    <span className="text-sm font-medium">Published</span>
+                  </label>
+                </div>
+                
+                {/* File Uploads */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="book_file" className="text-sm font-semibold">
+                      PDF File <span className="text-destructive">*</span>
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="book_file"
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => setFormData({ ...formData, book_file: e.target.files?.[0] || null })}
+                        required
+                        className="h-11 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[var(--primary-50)] file:text-[var(--primary-600)] hover:file:bg-[var(--primary-100)] dark:file:bg-[var(--primary-950)] dark:file:text-[var(--primary-400)]"
+                      />
+                    </div>
+                    {formData.book_file && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        Selected: {formData.book_file.name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="cover_file" className="text-sm font-semibold">Cover Image</Label>
+                    <Input
+                      id="cover_file"
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setFormData({ ...formData, cover_file: e.target.files?.[0] || null })}
+                      className="h-11 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-[var(--accent-50)] file:text-[var(--accent-600)] hover:file:bg-[var(--accent-100)] dark:file:bg-[var(--accent-950)] dark:file:text-[var(--accent-400)]"
+                    />
+                    {formData.cover_file && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        Selected: {formData.cover_file.name}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                <Button 
+                  type="submit" 
+                  disabled={uploading} 
+                  className="w-full h-12 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white font-semibold shadow-lg"
+                >
+                  {uploading ? (
+                    <>
+                      <span className="animate-spin mr-2">⏳</span>
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Upload Book
+                    </>
+                  )}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+
+        {/* Search & Filter Bar */}
+        <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              placeholder="Search books by title, author, or category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 h-12 bg-background/80 backdrop-blur-sm border-[var(--border)]"
+            />
+          </div>
+          <div className="flex gap-2">
+            <Button
+              variant={viewMode === "grid" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("grid")}
+              className="h-12 w-12"
+            >
+              <Grid3X3 className="w-5 h-5" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "outline"}
+              size="icon"
+              onClick={() => setViewMode("list")}
+              className="h-12 w-12"
+            >
+              <List className="w-5 h-5" />
+            </Button>
+          </div>
+        </div>
       </div>
 
+      {/* Content */}
       {loading ? (
-        <div className="space-y-4">
-          {[...Array(5)].map((_, i) => (
-            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="rounded-2xl border border-[var(--border)] overflow-hidden">
+              <Skeleton className="h-48 w-full" />
+              <div className="p-4 space-y-3">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-1/2" />
+                <Skeleton className="h-3 w-1/3" />
+              </div>
+            </div>
           ))}
         </div>
-      ) : books.length === 0 ? (
-        <div className="text-center py-12 border border-[var(--border)] rounded-lg bg-background">
-          <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-foreground font-serif">No books found</h3>
-          <p className="text-muted-foreground mb-4">Upload your first biblical resource to get started</p>
+      ) : filteredBooks.length === 0 ? (
+        <div className="text-center py-16 border border-dashed border-[var(--border)] rounded-2xl bg-[var(--muted)]/30">
+          <div className="w-20 h-20 rounded-2xl bg-[var(--primary-50)] dark:bg-[var(--primary-950)] mx-auto mb-6 flex items-center justify-center">
+            <BookOpen className="w-10 h-10 text-[var(--primary-500)]" />
+          </div>
+          <h3 className="text-xl font-semibold mb-2 text-foreground">
+            {searchQuery ? "No books found" : "Your library is empty"}
+          </h3>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            {searchQuery
+              ? `No books match "${searchQuery}". Try a different search term.`
+              : "Start building your collection by uploading your first book."
+            }
+          </p>
+          {!searchQuery && (
+            <Button
+              onClick={() => setUploadDialogOpen(true)}
+              className="bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] text-white"
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload First Book
+            </Button>
+          )}
+        </div>
+      ) : viewMode === "grid" ? (
+        /* Grid View */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {filteredBooks.map((book) => (
+            <div
+              key={book.id}
+              className="group rounded-2xl border border-[var(--border)] bg-background overflow-hidden hover:shadow-xl hover:border-[var(--primary-200)] dark:hover:border-[var(--primary-800)] transition-all duration-300 hover:-translate-y-1"
+            >
+              {/* Cover */}
+              <div className="relative h-48 bg-gradient-to-br from-[var(--primary-100)] to-[var(--accent-100)] dark:from-[var(--primary-900)] dark:to-[var(--accent-900)]">
+                {book.cover_url ? (
+                  <Image
+                    src={book.cover_url}
+                    alt={book.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BookOpen className="w-16 h-16 text-[var(--primary-300)]" />
+                  </div>
+                )}
+                {/* Badges */}
+                <div className="absolute top-3 left-3 flex flex-wrap gap-2">
+                  {book.is_featured && (
+                    <span className="px-2.5 py-1 bg-[var(--accent-500)] text-white text-xs font-semibold rounded-full shadow-lg">
+                      ⭐ Featured
+                    </span>
+                  )}
+                  {!book.is_published && (
+                    <span className="px-2.5 py-1 bg-gray-800/80 text-white text-xs font-semibold rounded-full">
+                      Draft
+                    </span>
+                  )}
+                </div>
+                {/* Actions Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4 gap-2">
+                  <Link href={`/books/${book.id}`}>
+                    <Button size="sm" variant="secondary" className="h-9 shadow-lg">
+                      <Eye className="w-4 h-4 mr-1" />
+                      View
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => openDeleteDialog(book)}
+                    className="h-9 shadow-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Details */}
+              <div className="p-4 space-y-3">
+                <div>
+                  <h3 className="font-semibold text-foreground line-clamp-1 group-hover:text-[var(--primary-600)] dark:group-hover:text-[var(--primary-400)] transition-colors">
+                    {book.title}
+                  </h3>
+                  {book.author && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                      <User className="w-3 h-3" />
+                      {book.author}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <span className="px-2.5 py-1 bg-[var(--primary-50)] dark:bg-[var(--primary-950)] text-[var(--primary-600)] dark:text-[var(--primary-400)] text-xs font-medium rounded-full">
+                    {getCategoryLabel(book.category)}
+                  </span>
+                  {book.page_count && (
+                    <span className="px-2.5 py-1 bg-[var(--muted)] text-muted-foreground text-xs rounded-full">
+                      {book.page_count} pages
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground pt-2 border-t border-[var(--border)]">
+                  Added {new Date(book.created_at).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
-        <>
-          {/* Desktop Table View */}
-          <div className="hidden lg:block border border-[var(--border)] rounded-lg overflow-hidden">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cover</TableHead>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Author</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Pages</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {books.map((book) => (
-                    <TableRow key={book.id}>
-                      <TableCell>
+        /* List View */
+        <div className="border border-[var(--border)] rounded-2xl overflow-hidden bg-background">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-[var(--muted)]/50">
+                <TableHead className="font-semibold">Book</TableHead>
+                <TableHead className="font-semibold">Category</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Pages</TableHead>
+                <TableHead className="font-semibold">Added</TableHead>
+                <TableHead className="text-right font-semibold">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredBooks.map((book) => (
+                <TableRow key={book.id} className="group hover:bg-[var(--muted)]/30">
+                  <TableCell>
+                    <div className="flex items-center gap-4">
+                      <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-[var(--primary-50)] dark:bg-[var(--primary-950)] flex-shrink-0">
                         {book.cover_url ? (
                           <Image
                             src={book.cover_url}
                             alt={book.title}
-                            width={50}
-                            height={75}
-                            className="object-cover rounded"
+                            fill
+                            className="object-cover"
                           />
                         ) : (
-                          <div className="w-[50px] h-[75px] bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded flex items-center justify-center">
-                            <BookOpen className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <BookOpen className="w-6 h-6 text-[var(--primary-400)]" />
                           </div>
                         )}
-                      </TableCell>
-                      <TableCell className="font-medium font-serif">{book.title}</TableCell>
-                      <TableCell>
-                        {book.author ? (
-                          <span className="flex items-center gap-1 text-sm">
-                            <User className="w-3 h-3" />
-                            {book.author}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
+                      </div>
+                      <div>
+                        <p className="font-medium text-foreground line-clamp-1">{book.title}</p>
+                        {book.author && (
+                          <p className="text-sm text-muted-foreground">{book.author}</p>
                         )}
-                      </TableCell>
-                      <TableCell>
-                        <span className="category-badge">
-                          {getCategoryLabel(book.category)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-2">
-                          {book.is_published && (
-                            <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded font-medium">
-                              Published
-                            </span>
-                          )}
-                          {book.is_featured && (
-                            <span className="px-2 py-1 bg-[var(--accent-100)] dark:bg-[var(--accent-900)] text-[var(--accent-700)] dark:text-[var(--accent-300)] text-xs rounded font-medium">
-                              ⭐ Featured
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{book.page_count || "-"}</TableCell>
-                      <TableCell>
-                        {new Date(book.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Link href={`/books/${book.id}`}>
-                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </Link>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => openDeleteDialog(book)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </div>
-
-          {/* Mobile Card View */}
-          <div className="lg:hidden space-y-4">
-            {books.map((book) => (
-              <div
-                key={book.id}
-                className="border border-[var(--border)] rounded-lg p-4 bg-background space-y-4"
-              >
-                <div className="flex gap-4">
-                  {book.cover_url ? (
-                    <Image
-                      src={book.cover_url}
-                      alt={book.title}
-                      width={60}
-                      height={90}
-                      className="object-cover rounded flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-[60px] h-[90px] bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded flex items-center justify-center flex-shrink-0">
-                      <BookOpen className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+                      </div>
                     </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base mb-1 text-foreground line-clamp-2 font-serif">
-                      {book.title}
-                    </h3>
-                    {book.author && (
-                      <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
-                        <User className="w-3 h-3" />
-                        {book.author}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      <span className="category-badge text-xs">
-                        {getCategoryLabel(book.category)}
-                      </span>
-                      {book.is_published && (
-                        <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded font-medium">
+                  </TableCell>
+                  <TableCell>
+                    <span className="px-2.5 py-1 bg-[var(--primary-50)] dark:bg-[var(--primary-950)] text-[var(--primary-600)] dark:text-[var(--primary-400)] text-xs font-medium rounded-full">
+                      {getCategoryLabel(book.category)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-2">
+                      {book.is_published ? (
+                        <span className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs rounded font-medium">
                           Published
+                        </span>
+                      ) : (
+                        <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-xs rounded font-medium">
+                          Draft
                         </span>
                       )}
                       {book.is_featured && (
@@ -545,83 +646,91 @@ export default function AdminBooksPage() {
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <p>Pages: {book.page_count || "-"}</p>
-                      <p>Created: {new Date(book.created_at).toLocaleDateString()}</p>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {book.page_count || "-"}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {new Date(book.created_at).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      <Link href={`/books/${book.id}`}>
+                        <Button variant="ghost" size="sm" className="h-9 w-9 p-0">
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(book)}
+                        className="h-9 w-9 p-0 hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
                     </div>
-                  </div>
-                </div>
-                <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
-                  <Link href={`/books/${book.id}`} className="flex-1">
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Eye className="w-4 h-4 mr-2" />
-                      View
-                    </Button>
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openDeleteDialog(book)}
-                    className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                  >
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Delete
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 rounded-full bg-destructive/10">
-                <AlertTriangle className="w-6 h-6 text-destructive" />
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-2xl bg-destructive/10">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
               </div>
-              <AlertDialogTitle className="text-xl font-serif">Delete Book</AlertDialogTitle>
-            </div>
-            <AlertDialogDescription className="text-base">
-              Are you sure you want to delete{" "}
-              <span className="font-semibold text-foreground">
-                &quot;{bookToDelete?.title}&quot;
-              </span>
-              ? This action cannot be undone and will permanently remove the book
-              and all associated data from the platform.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          {bookToDelete && (
-            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg my-2">
-              {bookToDelete.cover_url ? (
-                <Image
-                  src={bookToDelete.cover_url}
-                  alt={bookToDelete.title}
-                  width={40}
-                  height={60}
-                  className="object-cover rounded"
-                />
-              ) : (
-                <div className="w-[40px] h-[60px] bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded flex items-center justify-center">
-                  <BookOpen className="w-5 h-5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-                </div>
-              )}
               <div>
-                <p className="font-medium text-sm">{bookToDelete.title}</p>
+                <AlertDialogTitle className="text-xl">Delete Book</AlertDialogTitle>
+                <AlertDialogDescription className="text-sm">
+                  This action cannot be undone
+                </AlertDialogDescription>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          
+          {bookToDelete && (
+            <div className="flex items-center gap-4 p-4 bg-[var(--muted)]/50 rounded-xl mb-4">
+              <div className="relative w-12 h-16 rounded-lg overflow-hidden bg-[var(--primary-50)] dark:bg-[var(--primary-950)] flex-shrink-0">
+                {bookToDelete.cover_url ? (
+                  <Image
+                    src={bookToDelete.cover_url}
+                    alt={bookToDelete.title}
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <BookOpen className="w-5 h-5 text-[var(--primary-400)]" />
+                  </div>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-foreground truncate">{bookToDelete.title}</p>
                 {bookToDelete.author && (
-                  <p className="text-xs text-muted-foreground">by {bookToDelete.author}</p>
+                  <p className="text-sm text-muted-foreground truncate">by {bookToDelete.author}</p>
                 )}
               </div>
             </div>
           )}
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+          
+          <p className="text-sm text-muted-foreground">
+            Are you sure you want to delete this book? All associated data including reading sessions and analytics will be permanently removed.
+          </p>
+          
+          <AlertDialogFooter className="mt-6">
+            <AlertDialogCancel disabled={deleting} className="h-11">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-11 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {deleting ? (
                 <>

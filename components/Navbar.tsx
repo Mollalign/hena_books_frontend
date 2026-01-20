@@ -146,9 +146,11 @@ export default function Navbar() {
                                         </div>
                                     </DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="cursor-pointer">
-                                        <User className="mr-2 h-4 w-4" />
-                                        <span>Profile</span>
+                                    <DropdownMenuItem asChild className="cursor-pointer">
+                                        <Link href="/profile" className="flex items-center">
+                                            <User className="mr-2 h-4 w-4" />
+                                            <span>Profile</span>
+                                        </Link>
                                     </DropdownMenuItem>
                                     {user.role === "admin" && (
                                         <DropdownMenuItem asChild className="cursor-pointer">
@@ -252,6 +254,18 @@ export default function Navbar() {
                                     </div>
                                 </div>
 
+                                <Link
+                                    href="/profile"
+                                    className="flex items-center justify-between mx-2 px-4 py-3 rounded-xl text-base font-medium text-foreground hover:bg-[var(--muted)] transition-all"
+                                    onClick={closeMobileMenu}
+                                >
+                                    <span className="flex items-center gap-3">
+                                        <User className="w-5 h-5 text-[var(--primary-500)]" />
+                                        My Profile
+                                    </span>
+                                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                </Link>
+
                                 {user.role === "admin" && (
                                     <Link
                                         href="/admin/dashboard"
@@ -259,7 +273,7 @@ export default function Navbar() {
                                         onClick={closeMobileMenu}
                                     >
                                         <span className="flex items-center gap-3">
-                                            <LayoutDashboard className="w-5 h-5 text-[var(--primary-500)]" />
+                                            <LayoutDashboard className="w-5 h-5 text-[var(--accent-500)]" />
                                             Admin Dashboard
                                         </span>
                                         <ChevronRight className="w-4 h-4 text-muted-foreground" />
