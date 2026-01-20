@@ -1,9 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, BookOpen, ChevronLeft, ChevronRight, Sparkles, Filter, X } from "lucide-react";
+import Link from "next/link";
+import { Search, BookOpen, ChevronLeft, ChevronRight, Sparkles, Filter, X, Home, ArrowLeft } from "lucide-react";
 import { booksService, Book, BookCategory, BOOK_CATEGORIES, getCategoryLabel } from "@/lib/services/books";
 import BookCard from "@/components/books/BookCard";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -74,35 +77,49 @@ export default function BooksPage() {
   const hasActiveFilters = searchQuery || selectedCategory;
 
   return (
-    <div className="min-h-screen bg-background pt-20 sm:pt-24 pb-16 sm:pb-20 relative">
-      {/* Background Effects */}
-      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--primary-500)]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--accent-500)]/5 rounded-full blur-3xl" />
-      </div>
+    <>
+      <Navbar />
+      <div className="min-h-screen bg-background pt-20 sm:pt-24 pb-16 sm:pb-20 relative">
+        {/* Background Effects */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--primary-500)]/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-64 h-64 sm:w-96 sm:h-96 bg-[var(--accent-500)]/5 rounded-full blur-3xl" />
+        </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Header Section */}
-        <div className="text-center mb-8 sm:mb-12 lg:mb-16 pt-4 sm:pt-8">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mb-4 sm:mb-6">
-            <Sparkles className="w-3.5 h-3.5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-            <span className="text-xs sm:text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
-              Biblical Resources
-            </span>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          {/* Back to Home Button */}
+          <div className="pt-4 sm:pt-6 mb-4">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <Home className="w-4 h-4" />
+              <span>Back to Home</span>
+            </Link>
           </div>
 
-          {/* Main Heading */}
-          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight px-2 font-serif">
-            Explore Our{" "}
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-500)] to-[var(--accent-500)]">
-              Book Collection
-            </span>
-          </h1>
-          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
-            Discover biblical teachings, devotionals, and resources to deepen your walk with Christ.
-          </p>
-        </div>
+          {/* Header Section */}
+          <div className="text-center mb-8 sm:mb-12 lg:mb-16">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mb-4 sm:mb-6">
+              <Sparkles className="w-3.5 h-3.5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+              <span className="text-xs sm:text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
+                Biblical Resources
+              </span>
+            </div>
+
+            {/* Main Heading */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 sm:mb-6 leading-tight px-2 font-serif">
+              Explore Our{" "}
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-500)] to-[var(--accent-500)]">
+                Book Collection
+              </span>
+            </h1>
+            <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed px-4">
+              Discover biblical teachings, devotionals, and resources to deepen your walk with Christ.
+            </p>
+          </div>
 
         {/* Search and Filter Bar */}
         <div className="mb-8 sm:mb-10 max-w-4xl mx-auto space-y-4">
@@ -318,7 +335,9 @@ export default function BooksPage() {
             )}
           </div>
         )}
+        </div>
       </div>
-    </div>
+      <Footer />
+    </>
   );
 }

@@ -45,15 +45,15 @@ api.interceptors.response.use(
         
         // Only clear token and redirect if it's not an auth check on a public page
         if (!isAuthCheck || !isPublicPage) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("refresh_token");
+        localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
           
           // Only redirect if on a protected page (admin, reading, etc.)
           const protectedPaths = ["/admin", "/profile"];
           const isProtectedPage = protectedPaths.some(path => window.location.pathname.startsWith(path));
           
           if (isProtectedPage && window.location.pathname !== "/login") {
-            window.location.href = "/login";
+          window.location.href = "/login";
           }
         }
       }

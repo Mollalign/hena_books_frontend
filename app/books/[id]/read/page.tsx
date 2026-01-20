@@ -2,16 +2,13 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Document, Page, pdfjs } from "react-pdf";
 import {
-  ChevronLeft,
-  ChevronRight,
-  ZoomIn,
-  ZoomOut,
-  Maximize,
-  Minimize,
   X,
   AlertCircle,
+  Maximize,
+  Minimize,
+  Download,
+  BookOpen,
 } from "lucide-react";
 import { booksService } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
@@ -20,28 +17,20 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-// Set up PDF.js worker - use unpkg for better reliability
-if (typeof window !== "undefined") {
-  pdfjs.GlobalWorkerOptions.workerSrc = \`https://unpkg.com/pdfjs-dist@\${pdfjs.version}/build/pdf.worker.min.js\`;
-}
-
 export default function BookReaderPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
   const [bookData, setBookData] = useState<any>(null);
-  const [pdfFile, setPdfFile] = useState<string | ArrayBuffer | null>(null);
-  const [numPages, setNumPages] = useState<number>(0);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [scale, setScale] = useState(1.5);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [pdfLoading, setPdfLoading] = useState(true);
-  const [pdfError, setPdfError] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [sessionId, setSessionId] = useState<number | null>(null);
   const [readingTime, setReadingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const loadBook = async () => {
@@ -52,54 +41,46 @@ export default function BookReaderPage() {
         router.push("/login");
         return;
       }
+
       try {
         setLoading(true);
-        setPdfError(null);
+        setError(null);
+
+        // Get book data
         const data = await booksService.getBookForReading(params.id as string);
         console.log("Book data loaded:", data);
-        
-        // Validate file URL
+
         if (!data.file_url) {
           throw new Error("Book file URL is missing");
         }
-        
-        // Check if URL is valid
-        try {
-          new URL(data.file_url);
-        } catch (urlError) {
-          throw new Error("Invalid file URL format");
-        }
-        
+
         setBookData(data);
+
+        // Create PDF URL via backend proxy (handles auth and CORS)
+        const apiBaseUrl = getApiBaseUrl();
+        const proxyUrl = `${apiBaseUrl}/api/v1/books/${params.id}/read/file`;
         
-        // Use backend proxy endpoint to avoid CORS issues
-        // Fetch PDF through API with authentication
-        try {
-          const token = localStorage.getItem("token");
-          const apiBaseUrl = getApiBaseUrl();
-          const proxyUrl = \`\${apiBaseUrl}/api/v1/books/\${params.id}/read/file\`;
-          console.log("Fetching PDF from proxy:", proxyUrl);
-          
-          const response = await fetch(proxyUrl, {
-            headers: {
-              Authorization: \`Bearer \${token}\`,
-            },
-          });
-          
-          if (!response.ok) {
-            throw new Error(\`Failed to fetch PDF: \${response.status}\`);
-          }
-          
-          const blob = await response.blob();
-          const arrayBuffer = await blob.arrayBuffer();
-          setPdfFile(arrayBuffer);
-          console.log("PDF loaded successfully via proxy");
-        } catch (proxyError: any) {
-          console.error("Proxy fetch error:", proxyError);
-          // Fallback to direct Cloudinary URL
-          console.log("Falling back to direct Cloudinary URL");
-          setPdfFile(data.file_url);
+        // Fetch the PDF as a blob and create an object URL
+        const response = await fetch(proxyUrl, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("PDF fetch error:", response.status, errorText);
+          throw new Error(`Failed to fetch PDF: ${response.status}`);
         }
+
+        const arrayBuffer = await response.arrayBuffer();
+        console.log("PDF loaded, size:", arrayBuffer.byteLength, "bytes");
+        
+        // Create blob with explicit PDF MIME type
+        const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
+        const objectUrl = URL.createObjectURL(pdfBlob);
+        setPdfUrl(objectUrl);
+        console.log("PDF blob URL created:", objectUrl);
 
         // Start reading session
         try {
@@ -115,12 +96,11 @@ export default function BookReaderPage() {
           }, 1000);
         } catch (sessionError: any) {
           console.error("Failed to start session:", sessionError);
-          // Don't block reading if session fails
         }
-      } catch (error: any) {
-        console.error("Failed to load book:", error);
-        toast.error(error.response?.data?.detail || "Failed to load book");
-        setPdfError("Failed to load book. Please try again.");
+      } catch (err: any) {
+        console.error("Failed to load book:", err);
+        setError(err.message || "Failed to load book");
+        toast.error("Failed to load book");
       } finally {
         setLoading(false);
       }
@@ -133,13 +113,15 @@ export default function BookReaderPage() {
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
+      if (pdfUrl) {
+        URL.revokeObjectURL(pdfUrl);
+      }
       if (sessionId) {
         analyticsService.endSession(sessionId).catch(console.error);
-        // Update progress
         if (readingTime > 0) {
           analyticsService
             .updateProgress(sessionId, {
-              last_page_read: pageNumber,
+              last_page_read: 1,
               time_spent_seconds: readingTime,
             })
             .catch(console.error);
@@ -148,50 +130,59 @@ export default function BookReaderPage() {
     };
   }, [params.id, user, router]);
 
+  // Update reading progress periodically
   useEffect(() => {
-    // Update reading progress periodically
     if (sessionId && readingTime > 0 && readingTime % 30 === 0) {
       analyticsService
         .updateProgress(sessionId, {
-          last_page_read: pageNumber,
+          last_page_read: 1,
           time_spent_seconds: 30,
         })
         .catch(console.error);
     }
-  }, [sessionId, pageNumber, readingTime]);
+  }, [sessionId, readingTime]);
 
-  const goToPrevPage = () => {
-    setPageNumber((prev) => Math.max(1, prev - 1));
-  };
-
-  const goToNextPage = () => {
-    setPageNumber((prev) => Math.min(numPages, prev + 1));
-  };
-
-  const zoomIn = () => {
-    setScale((prev) => Math.min(3, prev + 0.25));
-  };
-
-  const zoomOut = () => {
-    setScale((prev) => Math.max(0.5, prev - 0.25));
-  };
-
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      document.documentElement.requestFullscreen();
-    } else {
-      document.exitFullscreen();
+  const toggleFullscreen = async () => {
+    try {
+      if (!isFullscreen) {
+        await containerRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Fullscreen error:", err);
     }
-    setIsFullscreen(!isFullscreen);
   };
+
+  // Listen for fullscreen changes
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return \`\${mins}:\${secs.toString().padStart(2, "0")}\`;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  if (loading || !bookData) {
+  const handleDownload = () => {
+    if (pdfUrl && bookData) {
+      const link = document.createElement("a");
+      link.href = pdfUrl;
+      link.download = `${bookData.title}.pdf`;
+      link.click();
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#1a1614] flex items-center justify-center">
         <div className="text-center">
@@ -202,59 +193,73 @@ export default function BookReaderPage() {
     );
   }
 
+  if (error || !bookData) {
+    return (
+      <div className="min-h-screen bg-[#1a1614] flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
+          <p className="text-red-400 text-lg mb-2">{error || "Book not found"}</p>
+          <Button
+            onClick={() => router.push("/books")}
+            className="mt-4 bg-[var(--primary-500)] hover:bg-[var(--primary-600)]"
+          >
+            Back to Books
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[#1a1614] text-[#f5f1eb]">
+    <div
+      ref={containerRef}
+      className="min-h-screen bg-[#1a1614] text-[#f5f1eb] flex flex-col"
+    >
       {/* Header Controls */}
-      <div className="fixed top-0 left-0 right-0 bg-[#1a1614]/95 backdrop-blur-sm z-50 p-4 border-b border-[#3d342d]">
+      <div className="bg-[#1a1614]/95 backdrop-blur-sm z-50 p-4 border-b border-[#3d342d]">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(\`/books/\${params.id}\`)}
+              onClick={() => router.push(`/books/${params.id}`)}
               className="text-[#f5f1eb] hover:bg-[#3d342d]"
             >
               <X className="w-4 h-4 mr-2" />
               Close
             </Button>
-            <div>
-              <h2 className="text-lg font-semibold truncate max-w-md font-serif">
-                {bookData.title}
-              </h2>
-              {bookData.author && (
-                <p className="text-sm text-[#a89a8e]">by {bookData.author}</p>
-              )}
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-[var(--primary-400)]" />
+              <div>
+                <h2 className="text-lg font-semibold truncate max-w-md font-serif">
+                  {bookData.title}
+                </h2>
+                {bookData.author && (
+                  <p className="text-sm text-[#a89a8e]">by {bookData.author}</p>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#a89a8e]">
-              {formatTime(readingTime)}
+            <span className="text-sm text-[#a89a8e] mr-2">
+              Reading: {formatTime(readingTime)}
             </span>
             <Button
               variant="ghost"
               size="sm"
-              onClick={zoomOut}
+              onClick={handleDownload}
               className="text-[#f5f1eb] hover:bg-[#3d342d]"
+              title="Download PDF"
             >
-              <ZoomOut className="w-4 h-4" />
-            </Button>
-            <span className="text-sm text-[#a89a8e] w-12 text-center">
-              {Math.round(scale * 100)}%
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={zoomIn}
-              className="text-[#f5f1eb] hover:bg-[#3d342d]"
-            >
-              <ZoomIn className="w-4 h-4" />
+              <Download className="w-4 h-4" />
             </Button>
             <Button
               variant="ghost"
               size="sm"
               onClick={toggleFullscreen}
               className="text-[#f5f1eb] hover:bg-[#3d342d]"
+              title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
             >
               {isFullscreen ? (
                 <Minimize className="w-4 h-4" />
@@ -267,122 +272,45 @@ export default function BookReaderPage() {
       </div>
 
       {/* PDF Viewer */}
-      <div className="pt-20 pb-16 flex items-center justify-center min-h-screen">
-        <div className="max-w-5xl w-full px-4">
-          {pdfError ? (
-            <div className="text-center py-12">
-              <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
-              <p className="text-red-400 text-lg mb-2">{pdfError}</p>
-              <Button
-                onClick={() => {
-                  setPdfError(null);
-                  setPdfLoading(true);
-                  window.location.reload();
-                }}
-                className="mt-4 bg-[var(--primary-500)] hover:bg-[var(--primary-600)]"
-              >
-                Retry
-              </Button>
-            </div>
-          ) : pdfFile ? (
-            <Document
-              file={pdfFile}
-              onLoadSuccess={({ numPages }) => {
-                console.log("PDF loaded successfully, pages:", numPages);
-                setNumPages(numPages);
-                setPdfLoading(false);
-                setPdfError(null);
-              }}
-              onLoadError={(error) => {
-                console.error("PDF load error:", error);
-                const errorMessage = error.message || "Unknown error";
-                console.error("Error details:", {
-                  message: errorMessage,
-                  name: error.name,
-                  stack: error.stack,
-                });
-                setPdfError(\`Failed to load PDF: \${errorMessage}. The file may be corrupted or inaccessible.\`);
-                setPdfLoading(false);
-                toast.error("Failed to load PDF file");
-              }}
-              loading={
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
-                  <p className="text-[#a89a8e]">Loading PDF...</p>
-                </div>
-              }
-              options={{
-                cMapUrl: \`https://unpkg.com/pdfjs-dist@\${pdfjs.version}/cmaps/\`,
-                cMapPacked: true,
-                standardFontDataUrl: \`https://unpkg.com/pdfjs-dist@\${pdfjs.version}/standard_fonts/\`,
-                httpHeaders: {},
-                withCredentials: false,
-              }}
-            >
-              {pdfLoading && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-400)] mx-auto mb-2"></div>
-                  <p className="text-[#a89a8e] text-sm">Rendering page...</p>
-                </div>
-              )}
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                renderTextLayer={true}
-                renderAnnotationLayer={true}
-                className="shadow-2xl"
-                onLoadSuccess={() => {
-                  setPdfLoading(false);
-                }}
-                onRenderError={(error) => {
-                  console.error("Page render error:", error);
-                  setPdfError("Failed to render page. Please try again.");
-                }}
-                loading={
-                  <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-400)] mx-auto"></div>
-                  </div>
-                }
-              />
-            </Document>
-          ) : (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
-              <p className="text-[#a89a8e]">Preparing PDF...</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Footer Controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-[#1a1614]/95 backdrop-blur-sm z-50 p-4 border-t border-[#3d342d]">
-        <div className="container mx-auto flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToPrevPage}
-            disabled={pageNumber <= 1}
-            className="text-[#f5f1eb] hover:bg-[#3d342d] disabled:opacity-50"
+      <div className="flex-1 bg-[#2d2520]">
+        {pdfUrl ? (
+          <object
+            data={pdfUrl}
+            type="application/pdf"
+            className="w-full h-full min-h-[calc(100vh-80px)]"
+            title={bookData.title}
           >
-            <ChevronLeft className="w-4 h-4 mr-2" />
-            Previous
-          </Button>
-
-          <span className="text-sm text-[#a89a8e]">
-            Page {pageNumber} of {numPages}
-          </span>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={goToNextPage}
-            disabled={pageNumber >= numPages}
-            className="text-[#f5f1eb] hover:bg-[#3d342d] disabled:opacity-50"
-          >
-            Next
-            <ChevronRight className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
+            {/* Fallback for browsers that don't support object */}
+            <embed
+              src={pdfUrl}
+              type="application/pdf"
+              className="w-full h-full min-h-[calc(100vh-80px)]"
+            />
+            {/* Final fallback */}
+            <div className="flex items-center justify-center h-full min-h-[calc(100vh-80px)]">
+              <div className="text-center p-8">
+                <AlertCircle className="w-16 h-16 text-[#a89a8e] mx-auto mb-4" />
+                <p className="text-[#a89a8e] mb-4">
+                  Your browser cannot display this PDF.
+                </p>
+                <Button
+                  onClick={handleDownload}
+                  className="bg-[var(--primary-500)] hover:bg-[var(--primary-600)]"
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download PDF
+                </Button>
+              </div>
+            </div>
+          </object>
+        ) : (
+          <div className="flex items-center justify-center h-full min-h-[calc(100vh-80px)]">
+            <div className="text-center">
+              <AlertCircle className="w-16 h-16 text-[#a89a8e] mx-auto mb-4" />
+              <p className="text-[#a89a8e]">PDF not available</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

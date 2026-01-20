@@ -77,18 +77,23 @@ export default function AdminSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-20 sm:top-24 left-4 z-50 p-2.5 rounded-xl bg-background border-2 border-[var(--border)] shadow-lg hover:border-[var(--primary-500)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all duration-200"
-        aria-label="Toggle menu"
-      >
-        {isOpen ? (
-          <X className="w-5 h-5 text-foreground" />
-        ) : (
-          <Menu className="w-5 h-5 text-foreground" />
-        )}
-      </button>
+      {/* Mobile Menu Button - Fixed in a non-overlapping position */}
+      <div className="lg:hidden fixed top-[4.5rem] sm:top-[5.5rem] left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-b border-[var(--border)] px-4 py-2">
+        <button
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 p-2 rounded-lg bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] hover:bg-[var(--primary-100)] dark:hover:bg-[var(--primary-900)] transition-all duration-200"
+          aria-label="Toggle menu"
+        >
+          {isOpen ? (
+            <X className="w-5 h-5 text-[var(--primary-600)]" />
+          ) : (
+            <Menu className="w-5 h-5 text-[var(--primary-600)]" />
+          )}
+          <span className="text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
+            {isOpen ? "Close Menu" : "Dashboard Menu"}
+          </span>
+        </button>
+      </div>
 
       {/* Mobile Overlay */}
       {isOpen && (

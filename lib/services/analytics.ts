@@ -1,7 +1,7 @@
 import api from "@/lib/api";
 
 export interface ReadingSession {
-  id: string;
+  id: string | number;
   user_id: string;
   book_id: string;
   started_at: string;
@@ -60,7 +60,7 @@ export const analyticsService = {
 
   // Update reading progress
   async updateProgress(
-    sessionId: string,
+    sessionId: string | number,
     data: ReadingSessionUpdate
   ): Promise<ReadingSession> {
     const response = await api.put<ReadingSession>(
@@ -71,7 +71,7 @@ export const analyticsService = {
   },
 
   // End reading session
-  async endSession(sessionId: string): Promise<ReadingSession> {
+  async endSession(sessionId: string | number): Promise<ReadingSession> {
     const response = await api.post<ReadingSession>(
       `/reading/${sessionId}/end`
     );

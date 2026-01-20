@@ -41,7 +41,8 @@ export default function AdminLayout({
       <Navbar />
       <div className="flex pt-16 sm:pt-20">
         <AdminSidebar />
-        <main className="flex-1 lg:ml-64 w-full min-w-0 p-4 sm:p-6 lg:p-8 pt-4 sm:pt-6 lg:pt-8">
+        {/* Added extra top padding on mobile for the menu bar */}
+        <main className="flex-1 lg:ml-64 w-full min-w-0 p-4 sm:p-6 lg:p-8 pt-16 sm:pt-16 lg:pt-8">
           {children}
         </main>
       </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, BookOpen, User, Tag } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, BookOpen, User, Tag, AlertTriangle } from "lucide-react";
 import { booksService, Book, BookCategory, BOOK_CATEGORIES, getCategoryLabel } from "@/lib/services/books";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Table,
   TableBody,
@@ -32,6 +42,9 @@ export default function AdminBooksPage() {
   const [loading, setLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [bookToDelete, setBookToDelete] = useState<Book | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -74,16 +87,38 @@ export default function AdminBooksPage() {
     try {
       setUploading(true);
       const uploadFormData = new FormData();
+      
+      // Required fields
       uploadFormData.append("title", formData.title);
-      uploadFormData.append("author", formData.author);
-      uploadFormData.append("description", formData.description);
-      uploadFormData.append("category", formData.category);
-      uploadFormData.append("scripture_focus", formData.scripture_focus);
-      uploadFormData.append("page_count", formData.page_count);
-      uploadFormData.append("published_date", formData.published_date);
-      uploadFormData.append("is_featured", String(formData.is_featured));
-      uploadFormData.append("is_published", String(formData.is_published));
       uploadFormData.append("book_file", formData.book_file);
+      
+      // Optional string fields - only append if not empty
+      if (formData.author) {
+        uploadFormData.append("author", formData.author);
+      }
+      if (formData.description) {
+        uploadFormData.append("description", formData.description);
+      }
+      if (formData.scripture_focus) {
+        uploadFormData.append("scripture_focus", formData.scripture_focus);
+      }
+      if (formData.published_date) {
+        uploadFormData.append("published_date", formData.published_date);
+      }
+      
+      // Category - always send
+      uploadFormData.append("category", formData.category);
+      
+      // Page count - only if valid number
+      if (formData.page_count && parseInt(formData.page_count) > 0) {
+        uploadFormData.append("page_count", formData.page_count);
+      }
+      
+      // Boolean fields
+      uploadFormData.append("is_featured", formData.is_featured ? "true" : "false");
+      uploadFormData.append("is_published", formData.is_published ? "true" : "false");
+      
+      // Cover file - only if selected
       if (formData.cover_file) {
         uploadFormData.append("cover_file", formData.cover_file);
       }
@@ -107,24 +142,48 @@ export default function AdminBooksPage() {
       fetchBooks();
     } catch (error: any) {
       console.error("Failed to upload book:", error);
-      toast.error(error.response?.data?.detail || "Failed to upload book");
+      
+      // Handle FastAPI validation errors (422)
+      let errorMessage = "Failed to upload book";
+      if (error.response?.data?.detail) {
+        const detail = error.response.data.detail;
+        if (Array.isArray(detail)) {
+          // FastAPI validation error format: [{loc: [...], msg: "...", type: "..."}]
+          errorMessage = detail.map((err: any) => {
+            const field = err.loc?.slice(-1)[0] || "field";
+            return `${field}: ${err.msg}`;
+          }).join(", ");
+        } else if (typeof detail === "string") {
+          errorMessage = detail;
+        }
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this book?")) {
-      return;
-    }
+  const openDeleteDialog = (book: Book) => {
+    setBookToDelete(book);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!bookToDelete) return;
 
     try {
-      await booksService.deleteBook(id);
-      toast.success("Book deleted successfully");
+      setDeleting(true);
+      await booksService.deleteBook(bookToDelete.id);
+      toast.success(`"${bookToDelete.title}" deleted successfully`);
+      setDeleteDialogOpen(false);
+      setBookToDelete(null);
       fetchBooks();
     } catch (error: any) {
       console.error("Failed to delete book:", error);
       toast.error("Failed to delete book");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -418,7 +477,7 @@ export default function AdminBooksPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Link href={\`/books/\${book.id}\`}>
+                          <Link href={`/books/${book.id}`}>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -426,7 +485,7 @@ export default function AdminBooksPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDelete(book.id)}
+                            onClick={() => openDeleteDialog(book)}
                             className="h-8 w-8 p-0"
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
@@ -493,7 +552,7 @@ export default function AdminBooksPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
-                  <Link href={\`/books/\${book.id}\`} className="flex-1">
+                  <Link href={`/books/${book.id}`} className="flex-1">
                     <Button variant="outline" size="sm" className="w-full">
                       <Eye className="w-4 h-4 mr-2" />
                       View
@@ -502,7 +561,7 @@ export default function AdminBooksPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(book.id)}
+                    onClick={() => openDeleteDialog(book)}
                     className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
@@ -514,6 +573,71 @@ export default function AdminBooksPage() {
           </div>
         </>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-2 rounded-full bg-destructive/10">
+                <AlertTriangle className="w-6 h-6 text-destructive" />
+              </div>
+              <AlertDialogTitle className="text-xl font-serif">Delete Book</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-foreground">
+                &quot;{bookToDelete?.title}&quot;
+              </span>
+              ? This action cannot be undone and will permanently remove the book
+              and all associated data from the platform.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          {bookToDelete && (
+            <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg my-2">
+              {bookToDelete.cover_url ? (
+                <Image
+                  src={bookToDelete.cover_url}
+                  alt={bookToDelete.title}
+                  width={40}
+                  height={60}
+                  className="object-cover rounded"
+                />
+              ) : (
+                <div className="w-[40px] h-[60px] bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded flex items-center justify-center">
+                  <BookOpen className="w-5 h-5 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
+                </div>
+              )}
+              <div>
+                <p className="font-medium text-sm">{bookToDelete.title}</p>
+                {bookToDelete.author && (
+                  <p className="text-xs text-muted-foreground">by {bookToDelete.author}</p>
+                )}
+              </div>
+            </div>
+          )}
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (
+                <>
+                  <span className="animate-spin mr-2">⏳</span>
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Delete Book
+                </>
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
