@@ -26,7 +26,7 @@ export default function BookReaderPage() {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [sessionId, setSessionId] = useState<string | number | null>(null);
   const [readingTime, setReadingTime] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -59,7 +59,7 @@ export default function BookReaderPage() {
         // Create PDF URL via backend proxy (handles auth and CORS)
         const apiBaseUrl = getApiBaseUrl();
         const proxyUrl = `${apiBaseUrl}/api/v1/books/${params.id}/read/file`;
-        
+
         // Fetch the PDF as a blob and create an object URL
         const response = await fetch(proxyUrl, {
           headers: {
@@ -75,7 +75,7 @@ export default function BookReaderPage() {
 
         const arrayBuffer = await response.arrayBuffer();
         console.log("PDF loaded, size:", arrayBuffer.byteLength, "bytes");
-        
+
         // Create blob with explicit PDF MIME type
         const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
         const objectUrl = URL.createObjectURL(pdfBlob);
