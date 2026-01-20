@@ -51,10 +51,10 @@ export default function Hero({ stats }: HeroProps) {
 
           {/* Scripture Quote */}
           <div className="max-w-xl mx-auto px-4">
-            <div className="relative py-4 px-6 rounded-xl bg-gradient-to-r from-[var(--primary-50)]/50 to-[var(--accent-50)]/50 dark:from-[var(--primary-950)]/50 dark:to-[var(--primary-900)]/50 border border-[var(--primary-100)] dark:border-[var(--primary-800)]">
+            <div className="relative py-4 px-6 rounded-xl bg-linear-to-r from-(--primary-50)/50 to-(--accent-50)/50 dark:from-(--primary-950)/50 dark:to-[var(--primary-900)]/50 border border-[var(--primary-100)] dark:border-[var(--primary-800)]">
               <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-[var(--primary-500)] to-[var(--accent-500)] rounded-l-xl" />
               <p className="text-sm sm:text-base italic text-muted-foreground font-serif">
-                "Your word is a lamp to my feet and a light to my path."
+                &quot;Your word is a lamp to my feet and a light to my path.&quot;
               </p>
               <span className="block mt-2 text-sm font-semibold text-[var(--accent-600)] dark:text-[var(--accent-400)]">
                 — Psalm 119:105
