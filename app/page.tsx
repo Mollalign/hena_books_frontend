@@ -2,14 +2,16 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
 import FeaturedBooks from "@/components/FeaturedBooks";
-import About from "@/components/About";
 import Footer from "@/components/Footer";
 import { analyticsService } from "@/lib/services/analytics";
-import { BookOpen, Heart, Users, Shield, ArrowRight, Sparkles, BookText, Cross } from "lucide-react";
-import { BOOK_CATEGORIES } from "@/lib/services/books";
+import { 
+  BookOpen, Heart, Users, Shield, ArrowRight, Sparkles, 
+  BookText, Quote, CheckCircle2, Zap, Globe, Star,
+  ChevronRight, Play, Clock, TrendingUp
+} from "lucide-react";
 
 // Daily verses for rotation
 const DAILY_VERSES = [
@@ -22,7 +24,6 @@ const DAILY_VERSES = [
   { text: "The grass withers, the flower fades, but the word of our God will stand forever.", reference: "Isaiah 40:8" },
 ];
 
-// Get verse based on day of year
 function getDailyVerse() {
   const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
   return DAILY_VERSES[dayOfYear % DAILY_VERSES.length];
@@ -34,10 +35,12 @@ export default function Home() {
     totalUsers: number;
     totalSessions: number;
   } | null>(null);
+  const [isVisible, setIsVisible] = useState(false);
 
   const dailyVerse = getDailyVerse();
 
   useEffect(() => {
+    setIsVisible(true);
     analyticsService
       .getOverviewStats()
       .then((data) => {
@@ -47,87 +50,204 @@ export default function Home() {
           totalSessions: data.total_reading_sessions,
         });
       })
-      .catch(() => {
-        // Silently fail - stats are optional
-      });
+      .catch(() => {});
   }, []);
 
-  // Featured categories to display
   const featuredCategories = [
-    { value: "DEVOTIONAL", label: "Devotional", icon: Heart, color: "from-rose-500 to-pink-600" },
-    { value: "BIBLICAL_STUDIES", label: "Bible Studies", icon: BookOpen, color: "from-[var(--primary-500)] to-[var(--primary-600)]" },
-    { value: "THEOLOGY", label: "Theology", icon: BookText, color: "from-indigo-500 to-purple-600" },
-    { value: "CHRISTIAN_LIVING", label: "Christian Living", icon: Users, color: "from-emerald-500 to-teal-600" },
-    { value: "PRAYER_WORSHIP", label: "Prayer & Worship", icon: Sparkles, color: "from-amber-500 to-orange-600" },
-    { value: "SPIRITUAL_GROWTH", label: "Spiritual Growth", icon: Shield, color: "from-cyan-500 to-blue-600" },
+    { value: "DEVOTIONAL", label: "Devotional", icon: Heart, description: "Daily inspiration" },
+    { value: "BIBLICAL_STUDIES", label: "Bible Studies", icon: BookOpen, description: "Deep diving" },
+    { value: "THEOLOGY", label: "Theology", icon: BookText, description: "Core doctrines" },
+    { value: "CHRISTIAN_LIVING", label: "Christian Living", icon: Users, description: "Practical faith" },
+    { value: "PRAYER_WORSHIP", label: "Prayer & Worship", icon: Sparkles, description: "Growing closer" },
+    { value: "SPIRITUAL_GROWTH", label: "Spiritual Growth", icon: TrendingUp, description: "Maturing faith" },
+  ];
+
+  const features = [
+    {
+      icon: BookOpen,
+      title: "Biblically Sound",
+      description: "Every resource aligns with Protestant biblical teaching",
+      stat: "100%",
+      statLabel: "Vetted Content"
+    },
+    {
+      icon: Shield,
+      title: "Trusted Authors",
+      description: "Works from respected theologians and pastors",
+      stat: "50+",
+      statLabel: "Authors"
+    },
+    {
+      icon: Zap,
+      title: "Read Anywhere",
+      description: "Access your library on any device, anytime",
+      stat: "24/7",
+      statLabel: "Access"
+    },
+    {
+      icon: Heart,
+      title: "Free Forever",
+      description: "No hidden fees, no subscriptions required",
+      stat: "100%",
+      statLabel: "Free"
+    },
   ];
 
   return (
     <>
       <Navbar />
-      <main className="relative pt-16 sm:pt-20">
-        <Hero stats={stats} />
-        
-        {/* Daily Verse Section */}
-        <section className="py-12 sm:py-16 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-700)]" />
-          {/* Subtle pattern */}
-          <div className="absolute inset-0 opacity-10" style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 15v30M20 25h20' stroke='%23ffffff' stroke-width='1.5' fill='none'/%3E%3C/svg%3E")`,
-          }} />
+      <main className="relative">
+        {/* Hero Section */}
+        <section className="relative min-h-screen flex items-center pt-20 pb-12 overflow-hidden">
+          {/* Animated Background */}
+          <div className="absolute inset-0 z-0">
+            <div className="absolute top-20 right-10 w-[500px] h-[500px] bg-gradient-to-br from-[var(--primary-500)]/20 to-transparent rounded-full blur-3xl animate-pulse" />
+            <div className="absolute bottom-20 left-10 w-[400px] h-[400px] bg-gradient-to-tr from-[var(--accent-500)]/15 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-[var(--primary-500)]/5 rounded-full blur-3xl" />
+          </div>
+
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="max-w-3xl mx-auto text-center text-white">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 backdrop-blur-sm mb-6">
-                <BookOpen className="w-4 h-4" />
-                <span className="text-sm font-medium">Daily Scripture</span>
+            <div className={`max-w-5xl mx-auto text-center transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10'}`}>
+              {/* Badge */}
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[var(--accent-100)] to-[var(--accent-200)] dark:from-[var(--accent-900)]/50 dark:to-[var(--accent-800)]/50 border border-[var(--accent-300)] dark:border-[var(--accent-700)] mb-8">
+                <Star className="w-4 h-4 text-[var(--accent-600)] fill-[var(--accent-500)]" />
+                <span className="text-sm font-semibold text-[var(--accent-700)] dark:text-[var(--accent-300)]">
+                  Trusted by believers worldwide
+                </span>
               </div>
-              <blockquote className="text-xl sm:text-2xl md:text-3xl font-serif italic leading-relaxed mb-4">
-                "{dailyVerse.text}"
-              </blockquote>
-              <cite className="text-white/80 font-semibold">— {dailyVerse.reference}</cite>
+
+              {/* Main Heading */}
+              <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] mb-6 tracking-tight">
+                Grow Deeper in
+                <span className="block mt-2 bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-500)] via-[var(--primary-600)] to-[var(--accent-500)]">
+                  Faith & Scripture
+                </span>
+              </h1>
+
+              <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
+                Access a curated library of biblical resources, devotionals, and theological works designed to strengthen your walk with Christ.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                <Link 
+                  href="/books" 
+                  className="group relative inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-white overflow-hidden transition-all hover:scale-105"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)]" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <span className="relative flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    Start Reading
+                    <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                </Link>
+                <Link 
+                  href="/register" 
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl text-base font-semibold text-foreground bg-background border-2 border-[var(--border)] hover:border-[var(--primary-300)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all"
+                >
+                  <Sparkles className="w-5 h-5 text-[var(--accent-500)]" />
+                  Create Free Account
+                </Link>
+              </div>
+
+              {/* Stats Row */}
+              {stats && (
+                <div className="flex flex-wrap justify-center gap-8 sm:gap-12 pt-8 border-t border-[var(--border)]">
+                  <div className="text-center">
+                    <div className="text-3xl sm:text-4xl font-bold text-foreground">{stats.totalBooks}+</div>
+                    <div className="text-sm text-muted-foreground font-medium">Books Available</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl sm:text-4xl font-bold text-foreground">{stats.totalUsers}+</div>
+                    <div className="text-sm text-muted-foreground font-medium">Active Readers</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-3xl sm:text-4xl font-bold text-foreground">{stats.totalSessions}+</div>
+                    <div className="text-sm text-muted-foreground font-medium">Reading Sessions</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Scroll Indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
+            <div className="w-6 h-10 rounded-full border-2 border-[var(--border)] flex justify-center pt-2">
+              <div className="w-1 h-2 bg-[var(--primary-500)] rounded-full" />
+            </div>
+          </div>
+        </section>
+
+        {/* Daily Verse Section */}
+        <section className="py-16 sm:py-20 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-500)] via-[var(--primary-600)] to-[var(--primary-700)]" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoNnYtNmgtNnptMC0xMHY2aDZ2LTZoLTZ6bTAtMTB2Nmg2di02aC02em0tMTAgMTB2Nmg2di02aC02em0wIDEwdjZoNnYtNmgtNnptMC0yMHY2aDZ2LTZoLTZ6bS0xMCAyMHY2aDZ2LTZoLTZ6bTAgLTEwdjZoNnYtNmgtNnptMC0xMHY2aDZ2LTZoLTZ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+          
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 sm:p-12 border border-white/20">
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+                    <Quote className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                  </div>
+                  <div className="text-center md:text-left flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-white/60 uppercase tracking-wider mb-3">
+                      Today's Scripture
+                    </p>
+                    <blockquote className="text-xl sm:text-2xl md:text-3xl text-white font-medium leading-relaxed mb-4 italic">
+                      "{dailyVerse.text}"
+                    </blockquote>
+                    <cite className="text-[var(--accent-300)] font-bold text-lg">— {dailyVerse.reference}</cite>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </section>
 
         {/* Categories Section */}
-        <section className="py-12 sm:py-16 lg:py-20 bg-background">
+        <section className="py-16 sm:py-24 bg-background relative">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-10 sm:mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mb-4">
-                <BookText className="w-4 h-4 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-                <span className="text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
-                  Browse by Category
-                </span>
+            <div className="text-center mb-12 sm:mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--muted)] border border-[var(--border)] mb-4">
+                <BookText className="w-4 h-4 text-[var(--primary-500)]" />
+                <span className="text-sm font-semibold text-foreground">Categories</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-serif mb-3">
-                Explore Our Collections
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                Explore by Topic
               </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                Find the perfect resource for your spiritual journey across our carefully curated categories
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Find exactly what you need for your spiritual journey
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6 max-w-6xl mx-auto">
-              {featuredCategories.map((cat) => (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
+              {featuredCategories.map((cat, idx) => (
                 <Link
                   key={cat.value}
                   href={`/books?category=${cat.value}`}
-                  className="group relative p-4 sm:p-6 rounded-2xl bg-card border border-[var(--border)] hover:border-[var(--primary-300)] hover:shadow-lg transition-all duration-300 hover:-translate-y-1 text-center"
+                  className="group relative p-6 rounded-2xl bg-card border border-[var(--border)] hover:border-[var(--primary-300)] transition-all duration-300 hover:-translate-y-2 hover:shadow-xl text-center overflow-hidden"
+                  style={{ animationDelay: `${idx * 100}ms` }}
                 >
-                  <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br ${cat.color} flex items-center justify-center mx-auto mb-3 shadow-lg group-hover:scale-110 transition-transform`}>
-                    <cat.icon className="w-6 h-6 sm:w-7 sm:h-7 text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-500)]/0 to-[var(--primary-500)]/0 group-hover:from-[var(--primary-500)]/5 group-hover:to-[var(--accent-500)]/5 transition-all duration-300" />
+                  <div className="relative">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300">
+                      <cat.icon className="w-7 h-7 text-white" />
+                    </div>
+                    <h3 className="font-bold text-sm mb-1">{cat.label}</h3>
+                    <p className="text-xs text-muted-foreground">{cat.description}</p>
                   </div>
-                  <h3 className="font-semibold text-sm sm:text-base">{cat.label}</h3>
                 </Link>
               ))}
             </div>
 
-            <div className="text-center mt-8">
+            <div className="text-center mt-10">
               <Link
                 href="/books"
-                className="inline-flex items-center gap-2 text-[var(--primary-600)] hover:text-[var(--primary-700)] font-semibold transition-colors"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--muted)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] border border-[var(--border)] hover:border-[var(--primary-300)] font-semibold transition-all"
               >
-                View All Categories
+                View All Books
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -136,99 +256,160 @@ export default function Home() {
 
         <FeaturedBooks />
 
-        {/* Why Read With Us Section */}
-        <section className="py-12 sm:py-16 lg:py-20 bg-[var(--surface-light)] dark:bg-[#1f1a16]">
+        {/* Features Section */}
+        <section className="py-16 sm:py-24 bg-[var(--muted)]/30">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-10 sm:mb-12">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[var(--primary-50)] dark:bg-[var(--primary-950)] border border-[var(--primary-200)] dark:border-[var(--primary-800)] mb-4">
-                <Heart className="w-4 h-4 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
-                <span className="text-sm font-medium text-[var(--primary-700)] dark:text-[var(--primary-300)]">
-                  Our Commitment
-                </span>
+            <div className="text-center mb-12 sm:mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-background border border-[var(--border)] mb-4">
+                <CheckCircle2 className="w-4 h-4 text-green-500" />
+                <span className="text-sm font-semibold text-foreground">Why Hena Books?</span>
               </div>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-serif mb-3">
-                Why Read With Us?
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
+                Built for Believers
               </h2>
-              <p className="text-muted-foreground max-w-2xl mx-auto">
-                We're committed to providing quality biblical resources that honor God and edify believers
+              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                Everything you need to grow in faith, all in one place
               </p>
             </div>
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
-              {[
-                {
-                  icon: BookOpen,
-                  title: "Biblically Sound",
-                  description: "Every resource is carefully reviewed to ensure alignment with Protestant biblical teaching",
-                },
-                {
-                  icon: Shield,
-                  title: "Trusted Authors",
-                  description: "Works from respected theologians, pastors, and Christian teachers",
-                },
-                {
-                  icon: Users,
-                  title: "Community Focus",
-                  description: "Resources designed for personal study and small group discussions",
-                },
-                {
-                  icon: Heart,
-                  title: "Heart for Ministry",
-                  description: "Our mission is to make life-changing Christian literature accessible to all",
-                },
-              ].map((item, idx) => (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+              {features.map((feature, idx) => (
                 <div
                   key={idx}
-                  className="p-6 rounded-2xl bg-card border border-[var(--border)] hover:shadow-lg transition-all"
+                  className="group relative p-6 sm:p-8 rounded-3xl bg-background border border-[var(--border)] hover:border-[var(--primary-300)] hover:shadow-xl transition-all duration-300"
                 >
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] flex items-center justify-center mb-4 shadow-lg">
-                    <item.icon className="w-6 h-6 text-white" />
+                  <div className="flex items-start justify-between mb-6">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <feature.icon className="w-7 h-7 text-white" />
+                    </div>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-[var(--primary-500)]">{feature.stat}</div>
+                      <div className="text-xs text-muted-foreground">{feature.statLabel}</div>
+                    </div>
                   </div>
-                  <h3 className="font-bold text-lg mb-2 font-serif">{item.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{item.description}</p>
+                  <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Call to Action Section */}
-        <section className="py-12 sm:py-16 lg:py-20 relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-600)] via-[var(--primary-700)] to-[var(--primary-800)]" />
-          {/* Decorative elements */}
-          <div className="absolute top-0 left-0 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl" />
-          
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-            <div className="max-w-3xl mx-auto text-center text-white">
-              <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold font-serif mb-4 leading-tight">
-                Begin Your Journey of Faith Today
-              </h2>
-              <p className="text-lg sm:text-xl text-white/80 mb-8 leading-relaxed">
-                Join thousands of believers growing in their faith through the power of God's Word. 
-                Start reading today and transform your spiritual life.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link
-                  href="/register"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[var(--primary-700)] rounded-lg font-bold text-lg hover:bg-white/90 transition-all shadow-lg hover:shadow-xl"
-                >
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5" />
-                </Link>
-                <Link
-                  href="/books"
-                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 text-white border-2 border-white/30 rounded-lg font-bold text-lg hover:bg-white/20 transition-all"
-                >
-                  <BookOpen className="w-5 h-5" />
-                  Browse Books
-                </Link>
+        {/* About/Mission Section */}
+        <section id="about" className="py-16 sm:py-24 bg-background">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-6xl mx-auto">
+              <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+                {/* Content */}
+                <div>
+                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--muted)] border border-[var(--border)] mb-6">
+                    <Globe className="w-4 h-4 text-[var(--primary-500)]" />
+                    <span className="text-sm font-semibold text-foreground">Our Mission</span>
+                  </div>
+                  
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                    Sharing God's Word
+                    <span className="block text-[var(--primary-500)]">with Everyone</span>
+                  </h2>
+                  
+                  <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                    Hena Books is a ministry dedicated to equipping believers with biblically-sound resources. 
+                    We believe transformative Christian literature should be accessible to all, regardless of location or financial situation.
+                  </p>
+
+                  <div className="space-y-4 mb-8">
+                    {[
+                      "Carefully curated Protestant resources",
+                      "Works from trusted theologians & pastors",
+                      "Perfect for personal & group study",
+                      "100% free, no subscriptions"
+                    ].map((item, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className="w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-foreground font-medium">{item}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Link
+                    href="/books"
+                    className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] text-white font-semibold hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] transition-all shadow-lg hover:shadow-xl"
+                  >
+                    Explore Library
+                    <ArrowRight className="w-5 h-5" />
+                  </Link>
+                </div>
+
+                {/* Visual */}
+                <div className="relative hidden lg:block">
+                  <div className="relative aspect-square">
+                    {/* Background decoration */}
+                    <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-100)] to-[var(--accent-100)] dark:from-[var(--primary-900)] dark:to-[var(--accent-900)] rounded-3xl" />
+                    
+                    {/* Quote card */}
+                    <div className="absolute inset-8 bg-background rounded-2xl shadow-2xl p-8 flex flex-col justify-center">
+                      <Quote className="w-12 h-12 text-[var(--primary-500)] mb-6" />
+                      <blockquote className="text-2xl font-medium text-foreground leading-relaxed mb-6 italic">
+                        "So faith comes from hearing, and hearing through the word of Christ."
+                      </blockquote>
+                      <cite className="text-[var(--primary-500)] font-bold text-lg">— Romans 10:17</cite>
+                      
+                      {/* Decorative element */}
+                      <div className="absolute bottom-8 right-8 w-20 h-20 bg-gradient-to-br from-[var(--accent-400)] to-[var(--accent-500)] rounded-2xl flex items-center justify-center shadow-lg">
+                        <BookOpen className="w-10 h-10 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <About />
+        {/* CTA Section */}
+        <section id="contact" className="py-16 sm:py-24 relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-500)] via-[var(--primary-600)] to-[var(--primary-700)]" />
+          <div className="absolute top-0 left-0 w-96 h-96 bg-[var(--accent-500)]/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
+          
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm mb-8">
+                <Sparkles className="w-4 h-4 text-[var(--accent-300)]" />
+                <span className="text-sm font-semibold text-white">Start Your Journey</span>
+              </div>
+              
+              <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+                Ready to Grow in Faith?
+              </h2>
+              
+              <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Join thousands of believers discovering life-changing Christian resources. 
+                Your spiritual journey starts here.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link
+                  href="/register"
+                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-[var(--primary-600)] rounded-2xl font-bold text-lg hover:bg-[var(--accent-100)] transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1"
+                >
+                  <Sparkles className="w-5 h-5 text-[var(--accent-500)]" />
+                  Get Started Free
+                  <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+                <Link
+                  href="/books"
+                  className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 rounded-2xl font-bold text-lg hover:bg-white/20 hover:border-white/50 transition-all"
+                >
+                  <BookOpen className="w-5 h-5" />
+                  Browse Library
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </>

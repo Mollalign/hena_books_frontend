@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BookOpen, Mail, Phone, MapPin, Heart, Send, Cross } from "lucide-react";
+import { BookOpen, Mail, Heart, Send, ArrowRight, Github, Twitter, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -16,94 +16,122 @@ export default function Footer() {
     if (!email) return;
 
     setSubscribing(true);
-    // TODO: Implement newsletter subscription backend
     await new Promise(resolve => setTimeout(resolve, 1000));
     toast.success("Thank you for subscribing! May God bless you.");
     setEmail("");
     setSubscribing(false);
   };
 
+  const quickLinks = [
+    { href: "/books", label: "Browse Books" },
+    { href: "/books?category=DEVOTIONAL", label: "Devotionals" },
+    { href: "/books?category=BIBLICAL_STUDIES", label: "Bible Studies" },
+    { href: "/books?category=THEOLOGY", label: "Theology" },
+  ];
+
+  const categories = [
+    { href: "/books?category=CHRISTIAN_LIVING", label: "Christian Living" },
+    { href: "/books?category=PRAYER_WORSHIP", label: "Prayer & Worship" },
+    { href: "/books?category=FAMILY_MARRIAGE", label: "Family & Marriage" },
+    { href: "/books?category=SPIRITUAL_GROWTH", label: "Spiritual Growth" },
+  ];
+
   return (
-    <footer className="bg-[var(--surface-light)] dark:bg-[#1f1a16] border-t border-[var(--border)]">
+    <footer className="bg-[var(--primary-950)] dark:bg-[#0a0f1a] text-white relative overflow-hidden">
+      {/* Background decoration */}
+      <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--primary-500)]/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[var(--accent-500)]/10 rounded-full blur-3xl" />
+      
       {/* Newsletter Section */}
-      <div className="border-b border-[var(--border)]">
-        <div className="container mx-auto px-4 py-12 sm:py-16">
-          <div className="max-w-2xl mx-auto text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] mb-6 shadow-lg">
-              <Mail className="w-7 h-7 text-white" />
+      <div className="relative z-10 border-b border-white/10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-20">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] rounded-3xl p-8 sm:p-12 relative overflow-hidden">
+              {/* Pattern overlay */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute inset-0" style={{
+                  backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+                }} />
+              </div>
+              
+              <div className="relative z-10 flex flex-col lg:flex-row items-center gap-8">
+                <div className="flex-1 text-center lg:text-left">
+                  <h3 className="text-2xl sm:text-3xl font-bold mb-3">
+                    Stay Connected in Faith
+                  </h3>
+                  <p className="text-white/80 text-lg">
+                    Weekly devotionals, new resources, and spiritual encouragement
+                  </p>
+                </div>
+                <form onSubmit={handleNewsletterSubmit} className="w-full lg:w-auto flex flex-col sm:flex-row gap-3">
+                  <Input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-14 px-6 rounded-xl bg-white/10 border-white/20 text-white placeholder:text-white/50 focus:bg-white/20 w-full sm:w-72"
+                    required
+                  />
+                  <Button 
+                    type="submit" 
+                    disabled={subscribing}
+                    className="h-14 px-8 rounded-xl bg-white text-[var(--primary-600)] hover:bg-white/90 font-bold"
+                  >
+                    {subscribing ? (
+                      "Subscribing..."
+                    ) : (
+                      <>
+                        Subscribe
+                        <Send className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </div>
             </div>
-            <h3 className="text-2xl sm:text-3xl font-bold mb-3 font-serif">
-              Stay Connected in Faith
-            </h3>
-            <p className="text-muted-foreground mb-6 text-base sm:text-lg">
-              Receive weekly devotionals, new book recommendations, and spiritual encouragement straight to your inbox.
-            </p>
-            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 h-12"
-                required
-              />
-              <Button 
-                type="submit" 
-                disabled={subscribing}
-                className="h-12 px-6 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white"
-              >
-                {subscribing ? (
-                  "Subscribing..."
-                ) : (
-                  <>
-                    <Send className="w-4 h-4 mr-2" />
-                    Subscribe
-                  </>
-                )}
-              </Button>
-            </form>
           </div>
         </div>
       </div>
 
       {/* Main Footer Content */}
-      <div className="container mx-auto px-4 py-12 sm:py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+      <div className="relative z-10 container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8">
           {/* Brand */}
-          <div className="md:col-span-2 lg:col-span-1">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="relative w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] flex items-center justify-center shadow-lg">
-                <BookOpen className="w-5 h-5 text-white" />
+          <div className="lg:col-span-1">
+            <Link href="/" className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[var(--primary-400)] to-[var(--primary-600)] flex items-center justify-center shadow-lg">
+                <BookOpen className="w-6 h-6 text-white" />
               </div>
-              <span className="text-xl font-bold font-serif bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-500)] to-[var(--accent-500)]">
-                Hena Books
-              </span>
+              <span className="text-2xl font-bold">Hena Books</span>
             </Link>
-            <p className="text-muted-foreground text-sm leading-relaxed mb-4">
-              A ministry dedicated to providing biblical resources that help believers grow in their faith and walk with Christ. Our mission is to make transformative Christian literature accessible to all.
+            <p className="text-white/60 leading-relaxed mb-6">
+              A ministry dedicated to providing biblically-sound resources for spiritual growth and deeper understanding of God's Word.
             </p>
-            <p className="scripture-quote text-sm italic">
-              "All Scripture is breathed out by God and profitable for teaching, for reproof, for correction, and for training in righteousness."
-              <span className="block mt-1 scripture-reference">— 2 Timothy 3:16</span>
-            </p>
+            <div className="flex gap-3">
+              {[Twitter, Facebook, Github].map((Icon, idx) => (
+                <a
+                  key={idx}
+                  href="#"
+                  className="w-10 h-10 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors"
+                >
+                  <Icon className="w-5 h-5" />
+                </a>
+              ))}
+            </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground font-serif">Quick Links</h4>
-            <ul className="space-y-2">
-              {[
-                { href: "/books", label: "Browse Books" },
-                { href: "/books?category=DEVOTIONAL", label: "Devotionals" },
-                { href: "/books?category=BIBLICAL_STUDIES", label: "Bible Studies" },
-                { href: "/books?category=THEOLOGY", label: "Theology" },
-              ].map((link) => (
+            <h4 className="font-bold text-lg mb-6">Quick Links</h4>
+            <ul className="space-y-4">
+              {quickLinks.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-[var(--primary-600)] transition-colors text-sm"
+                    className="text-white/60 hover:text-white transition-colors flex items-center gap-2 group"
                   >
-                    {link.label}
+                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    <span>{link.label}</span>
                   </Link>
                 </li>
               ))}
@@ -112,20 +140,16 @@ export default function Footer() {
 
           {/* Categories */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground font-serif">Categories</h4>
-            <ul className="space-y-2">
-              {[
-                { href: "/books?category=CHRISTIAN_LIVING", label: "Christian Living" },
-                { href: "/books?category=PRAYER_WORSHIP", label: "Prayer & Worship" },
-                { href: "/books?category=FAMILY_MARRIAGE", label: "Family & Marriage" },
-                { href: "/books?category=SPIRITUAL_GROWTH", label: "Spiritual Growth" },
-              ].map((link) => (
+            <h4 className="font-bold text-lg mb-6">Categories</h4>
+            <ul className="space-y-4">
+              {categories.map((link) => (
                 <li key={link.href}>
                   <Link
                     href={link.href}
-                    className="text-muted-foreground hover:text-[var(--primary-600)] transition-colors text-sm"
+                    className="text-white/60 hover:text-white transition-colors flex items-center gap-2 group"
                   >
-                    {link.label}
+                    <ArrowRight className="w-4 h-4 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                    <span>{link.label}</span>
                   </Link>
                 </li>
               ))}
@@ -134,38 +158,43 @@ export default function Footer() {
 
           {/* Contact */}
           <div>
-            <h4 className="font-semibold mb-4 text-foreground font-serif">Contact Us</h4>
-            <ul className="space-y-3">
-              <li className="flex items-start gap-3 text-muted-foreground text-sm">
-                <Mail className="w-4 h-4 mt-0.5 flex-shrink-0 text-[var(--primary-500)]" />
+            <h4 className="font-bold text-lg mb-6">Contact Us</h4>
+            <div className="space-y-4">
+              <a
+                href="mailto:contact@henabooks.com"
+                className="flex items-center gap-3 text-white/60 hover:text-white transition-colors group"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white/10 group-hover:bg-white/20 flex items-center justify-center transition-colors">
+                  <Mail className="w-5 h-5" />
+                </div>
                 <span>contact@henabooks.com</span>
-              </li>
-              <li className="flex items-start gap-3 text-muted-foreground text-sm">
-                <Phone className="w-4 h-4 mt-0.5 flex-shrink-0 text-[var(--primary-500)]" />
-                <span>+1 (555) 123-4567</span>
-              </li>
-              <li className="flex items-start gap-3 text-muted-foreground text-sm">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-[var(--primary-500)]" />
-                <span>Serving believers worldwide</span>
-              </li>
-            </ul>
+              </a>
+            </div>
+            
+            {/* Scripture Quote */}
+            <div className="mt-8 p-4 rounded-xl bg-white/5 border border-white/10">
+              <p className="text-sm text-white/60 italic leading-relaxed">
+                "All Scripture is breathed out by God and profitable for teaching..."
+              </p>
+              <p className="text-xs text-[var(--accent-400)] mt-2 font-semibold">— 2 Timothy 3:16</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-[var(--border)]">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
+      <div className="relative z-10 border-t border-white/10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-white/50">
             <p className="flex items-center gap-1">
               © {new Date().getFullYear()} Hena Books. Made with{" "}
-              <Heart className="w-4 h-4 text-[var(--primary-500)] fill-current" /> for the glory of God.
+              <Heart className="w-4 h-4 text-red-400 fill-red-400" /> for the glory of God.
             </p>
-            <div className="flex items-center gap-4">
-              <Link href="/privacy" className="hover:text-[var(--primary-600)] transition-colors">
+            <div className="flex items-center gap-6">
+              <Link href="/privacy" className="hover:text-white transition-colors">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="hover:text-[var(--primary-600)] transition-colors">
+              <Link href="/terms" className="hover:text-white transition-colors">
                 Terms of Service
               </Link>
             </div>

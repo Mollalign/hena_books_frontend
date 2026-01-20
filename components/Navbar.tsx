@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { LogOut, User, Menu, X, BookOpen, Settings, LayoutDashboard, Sun, Moon } from "lucide-react";
+import { LogOut, User, Menu, X, BookOpen, LayoutDashboard, Sun, Moon, Sparkles, ChevronRight } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
@@ -30,106 +30,113 @@ export default function Navbar() {
 
     useEffect(() => {
         const handleScroll = () => {
-            setIsScrolled(window.scrollY > 20);
+            setIsScrolled(window.scrollY > 10);
         };
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
 
-    // Close mobile menu on escape key
     useEffect(() => {
         const handleEscape = (event: KeyboardEvent) => {
             if (event.key === "Escape" && isMobileMenuOpen) {
                 setIsMobileMenuOpen(false);
             }
         };
-
         document.addEventListener("keydown", handleEscape);
         return () => document.removeEventListener("keydown", handleEscape);
     }, [isMobileMenuOpen]);
 
     const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
+    const navLinks = [
+        { href: "/", label: "Home" },
+        { href: "/books", label: "Books" },
+        { href: "#about", label: "About" },
+        { href: "#contact", label: "Contact" },
+    ];
+
     return (
         <nav
-            className="fixed top-0 left-0 right-0 z-50 bg-background shadow-md border-b border-[var(--border)] transition-all duration-300"
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
+                isScrolled || isMobileMenuOpen
+                    ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-[var(--border)]"
+                    : "bg-transparent"
+            }`}
         >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 md:h-20">
                     {/* Logo */}
                     <Link 
                         href="/" 
-                        className="flex items-center gap-2 sm:gap-2.5 group"
+                        className="flex items-center gap-2.5 group"
                         onClick={closeMobileMenu}
                     >
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
-                            <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white" />
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-400)] to-[var(--accent-600)] rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
+                            <div className="relative w-10 h-10 md:w-11 md:h-11 rounded-xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center shadow-lg group-hover:shadow-xl group-hover:scale-105 transition-all duration-300">
+                                <BookOpen className="w-5 h-5 md:w-6 md:h-6 text-white" />
+                            </div>
                         </div>
-                        <span className="text-lg sm:text-xl md:text-2xl font-bold font-serif bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-600)] to-[var(--accent-500)]">
-                            Hena Books
-                        </span>
+                        <div className="flex flex-col">
+                            <span className="text-lg md:text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-800)] dark:from-[var(--primary-400)] dark:to-[var(--primary-300)]">
+                                Hena Books
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-medium tracking-wide hidden sm:block">
+                                Biblical Resources
+                            </span>
+                        </div>
                     </Link>
 
-                    {/* Desktop Navigation */}
-                    <div className="hidden md:flex items-center gap-1">
-                        <Link 
-                            href="/" 
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all duration-200"
-                        >
-                            Home
-                        </Link>
-                        <Link 
-                            href="/books" 
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all duration-200"
-                        >
-                            Books
-                        </Link>
-                        <Link 
-                            href="#about" 
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all duration-200"
-                        >
-                            About
-                        </Link>
-                        <Link 
-                            href="#contact" 
-                            className="px-4 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all duration-200"
-                        >
-                            Contact
-                        </Link>
+                    {/* Desktop Navigation - Center */}
+                    <div className="hidden md:flex items-center">
+                        <div className="flex items-center gap-1 px-1.5 py-1.5 rounded-full bg-[var(--muted)]/50 backdrop-blur-sm border border-[var(--border)]">
+                            {navLinks.map((link) => (
+                                <Link 
+                                    key={link.href}
+                                    href={link.href} 
+                                    className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:shadow-sm transition-all duration-200"
+                                >
+                                    {link.label}
+                                </Link>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Auth Buttons */}
-                    <div className="hidden md:flex items-center gap-3">
-                        {/* Dark Mode Toggle */}
+                    {/* Right Side Actions */}
+                    <div className="hidden md:flex items-center gap-2">
+                        {/* Theme Toggle */}
                         {mounted && (
                             <button
                                 onClick={toggleTheme}
-                                className="p-2 rounded-lg text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all"
+                                className="relative p-2.5 rounded-full bg-[var(--muted)]/50 hover:bg-[var(--muted)] border border-[var(--border)] text-muted-foreground hover:text-foreground transition-all duration-200"
                                 aria-label="Toggle theme"
                             >
-                                {theme === "light" ? (
-                                    <Moon className="w-5 h-5" />
-                                ) : (
-                                    <Sun className="w-5 h-5" />
-                                )}
+                                <div className="relative w-5 h-5">
+                                    <Sun className={`w-5 h-5 absolute inset-0 transition-all duration-300 ${theme === "light" ? "opacity-0 rotate-90 scale-0" : "opacity-100 rotate-0 scale-100"}`} />
+                                    <Moon className={`w-5 h-5 absolute inset-0 transition-all duration-300 ${theme === "light" ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"}`} />
+                                </div>
                             </button>
                         )}
+
                         {user ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button 
                                         variant="ghost" 
-                                        className="relative h-10 w-10 rounded-full hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all"
+                                        className="relative h-11 gap-2 pl-2 pr-3 rounded-full bg-[var(--muted)]/50 hover:bg-[var(--muted)] border border-[var(--border)] transition-all"
                                     >
-                                        <Avatar className="h-10 w-10 border-2 border-[var(--primary-200)] dark:border-[var(--primary-800)]">
+                                        <Avatar className="h-7 w-7 border-2 border-[var(--primary-200)] dark:border-[var(--primary-700)]">
                                             <AvatarImage src="/avatars/01.png" alt={user.name} />
-                                            <AvatarFallback className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-white font-semibold">
+                                            <AvatarFallback className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white font-semibold text-xs">
                                                 {user.name.charAt(0).toUpperCase()}
                                             </AvatarFallback>
                                         </Avatar>
+                                        <span className="text-sm font-medium text-foreground max-w-[100px] truncate">
+                                            {user.name.split(' ')[0]}
+                                        </span>
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent className="w-56" align="end" forceMount>
+                                <DropdownMenuContent className="w-56 mt-2" align="end" forceMount>
                                     <DropdownMenuLabel className="font-normal">
                                         <div className="flex flex-col space-y-1">
                                             <p className="text-sm font-semibold leading-none">{user.name}</p>
@@ -162,164 +169,134 @@ export default function Navbar() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         ) : (
-                            <>
+                            <div className="flex items-center gap-2">
                                 <Link 
                                     href="/login"
-                                    className="px-4 py-2 rounded-lg text-sm font-semibold text-foreground hover:text-[var(--primary-600)] transition-colors"
+                                    className="px-4 py-2.5 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     Sign In
                                 </Link>
                                 <Link 
                                     href="/register"
-                                    className="px-5 py-2 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] transition-all shadow-md hover:shadow-lg"
+                                    className="group relative px-5 py-2.5 rounded-full text-sm font-semibold text-white overflow-hidden"
                                 >
-                                    Get Started
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] transition-all duration-300 group-hover:from-[var(--primary-600)] group-hover:to-[var(--primary-700)]" />
+                                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-500)] to-[var(--accent-600)] opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                    <span className="relative flex items-center gap-1.5">
+                                        <Sparkles className="w-4 h-4" />
+                                        Get Started
+                                    </span>
                                 </Link>
-                            </>
+                            </div>
                         )}
                     </div>
 
                     {/* Mobile Menu Button */}
-                    <button
-                        className="md:hidden p-2 rounded-lg text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Toggle menu"
-                    >
-                        {isMobileMenuOpen ? (
-                            <X className="w-6 h-6" />
-                        ) : (
-                            <Menu className="w-6 h-6" />
+                    <div className="flex md:hidden items-center gap-2">
+                        {mounted && (
+                            <button
+                                onClick={toggleTheme}
+                                className="p-2 rounded-full bg-[var(--muted)]/50 border border-[var(--border)] text-muted-foreground"
+                                aria-label="Toggle theme"
+                            >
+                                {theme === "light" ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                            </button>
                         )}
-                    </button>
+                        <button
+                            className="p-2 rounded-full bg-[var(--muted)]/50 border border-[var(--border)] text-foreground"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Toggle menu"
+                        >
+                            {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                        </button>
+                    </div>
                 </div>
 
                 {/* Mobile Menu */}
-                {isMobileMenuOpen && (
-                    <div
-                        className="fixed inset-0 top-16 md:top-20 z-40 bg-black/50 backdrop-blur-sm"
-                        onClick={closeMobileMenu}
-                    />
-                )}
                 <div
-                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out mobile-menu-content relative z-50 ${
-                        isMobileMenuOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"
+                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
+                        isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
                     }`}
-                    onClick={(e) => e.stopPropagation()}
                 >
-                    <div className="py-3 border-t border-[var(--border)] bg-background overflow-y-auto max-h-[calc(100vh-5rem)] shadow-lg">
-                        <div className="flex flex-col gap-1 px-2">
-                            {/* Navigation Links */}
+                    <div className="py-4 space-y-2 border-t border-[var(--border)] bg-background rounded-b-2xl shadow-lg">
+                        {/* Navigation Links */}
+                        {navLinks.map((link) => (
                             <Link 
-                                href="/" 
-                                className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all"
+                                key={link.href}
+                                href={link.href} 
+                                className="flex items-center justify-between px-4 py-3 rounded-xl text-base font-medium text-foreground hover:bg-[var(--muted)] transition-all"
                                 onClick={closeMobileMenu}
                             >
-                                Home
+                                {link.label}
+                                <ChevronRight className="w-4 h-4 text-muted-foreground" />
                             </Link>
-                            <Link 
-                                href="/books" 
-                                className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all"
-                                onClick={closeMobileMenu}
-                            >
-                                Books
-                            </Link>
-                            <Link 
-                                href="#about" 
-                                className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all"
-                                onClick={closeMobileMenu}
-                            >
-                                About
-                            </Link>
-                            <Link 
-                                href="#contact" 
-                                className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all"
-                                onClick={closeMobileMenu}
-                            >
-                                Contact
-                            </Link>
-                            
-                            <div className="border-t border-[var(--border)] my-2" />
-                            
-                            {/* Dark Mode Toggle - Mobile */}
-                            {mounted && (
-                                <button
-                                    onClick={toggleTheme}
-                                    className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all flex items-center gap-2"
-                                >
-                                    {theme === "light" ? (
-                                        <>
-                                            <Moon className="w-4 h-4" />
-                                            Dark Mode
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sun className="w-4 h-4" />
-                                            Light Mode
-                                        </>
-                                    )}
-                                </button>
-                            )}
-                            
-                            {user ? (
-                                <>
-                                    <div className="border-t border-[var(--border)] my-2" />
-                                    <div className="px-4 py-3 rounded-lg bg-gradient-to-r from-[var(--primary-50)] to-[var(--primary-100)] dark:from-[var(--primary-950)] dark:to-[var(--primary-900)] border border-[var(--primary-200)] dark:border-[var(--primary-800)]">
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-9 w-9 border-2 border-[var(--primary-300)] dark:border-[var(--primary-700)]">
-                                                <AvatarImage src="/avatars/01.png" alt={user.name} />
-                                                <AvatarFallback className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] text-white font-semibold text-sm">
-                                                    {user.name.charAt(0).toUpperCase()}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="text-sm font-semibold text-foreground">{user.name}</p>
-                                                <p className="text-xs text-muted-foreground">{user.email}</p>
-                                            </div>
+                        ))}
+                        
+                        <div className="border-t border-[var(--border)] my-3" />
+                        
+                        {user ? (
+                            <>
+                                {/* User Info Card */}
+                                <div className="mx-2 p-4 rounded-2xl bg-gradient-to-br from-[var(--primary-50)] to-[var(--accent-50)] dark:from-[var(--primary-950)] dark:to-[var(--primary-900)] border border-[var(--primary-100)] dark:border-[var(--primary-800)]">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-12 w-12 border-2 border-[var(--primary-200)] dark:border-[var(--primary-700)]">
+                                            <AvatarImage src="/avatars/01.png" alt={user.name} />
+                                            <AvatarFallback className="bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] text-white font-bold">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="font-semibold text-foreground truncate">{user.name}</p>
+                                            <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                         </div>
                                     </div>
-                                    {user.role === "admin" && (
-                                        <Link
-                                            href="/admin/dashboard"
-                                            className="px-4 py-2.5 rounded-lg text-sm font-medium text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all flex items-center gap-2"
-                                            onClick={closeMobileMenu}
-                                        >
-                                            <LayoutDashboard className="w-4 h-4" />
-                                            Admin Dashboard
-                                        </Link>
-                                    )}
-                                    <button
-                                        onClick={() => {
-                                            logout();
-                                            closeMobileMenu();
-                                        }}
-                                        className="px-4 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950 transition-all flex items-center gap-2 text-left"
+                                </div>
+
+                                {user.role === "admin" && (
+                                    <Link
+                                        href="/admin/dashboard"
+                                        className="flex items-center justify-between mx-2 px-4 py-3 rounded-xl text-base font-medium text-foreground hover:bg-[var(--muted)] transition-all"
+                                        onClick={closeMobileMenu}
                                     >
-                                        <LogOut className="w-4 h-4" />
-                                        Sign Out
-                                    </button>
-                                </>
-                            ) : (
-                                <>
-                                    <div className="border-t border-[var(--border)] my-2" />
-                                    <div className="flex flex-col gap-2 px-2">
-                                        <Link 
-                                            href="/login" 
-                                            className="px-4 py-2.5 rounded-lg text-sm font-semibold text-foreground hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] hover:text-[var(--primary-600)] transition-all text-center border border-[var(--border)] hover:border-[var(--primary-300)]"
-                                            onClick={closeMobileMenu}
-                                        >
-                                            Sign In
-                                        </Link>
-                                        <Link 
-                                            href="/register" 
-                                            className="px-4 py-2.5 rounded-lg text-sm font-semibold text-white bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] transition-all shadow-md text-center"
-                                            onClick={closeMobileMenu}
-                                        >
-                                            Get Started
-                                        </Link>
-                                    </div>
-                                </>
-                            )}
-                        </div>
+                                        <span className="flex items-center gap-3">
+                                            <LayoutDashboard className="w-5 h-5 text-[var(--primary-500)]" />
+                                            Admin Dashboard
+                                        </span>
+                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                                    </Link>
+                                )}
+
+                                <button
+                                    onClick={() => {
+                                        logout();
+                                        closeMobileMenu();
+                                    }}
+                                    className="flex items-center gap-3 w-full mx-2 px-4 py-3 rounded-xl text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all text-left"
+                                    style={{ width: 'calc(100% - 1rem)' }}
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    Sign Out
+                                </button>
+                            </>
+                        ) : (
+                            <div className="flex flex-col gap-2 px-2 pt-2">
+                                <Link 
+                                    href="/login" 
+                                    className="flex items-center justify-center px-4 py-3 rounded-xl text-base font-semibold text-foreground bg-[var(--muted)] hover:bg-[var(--muted)]/80 transition-all"
+                                    onClick={closeMobileMenu}
+                                >
+                                    Sign In
+                                </Link>
+                                <Link 
+                                    href="/register" 
+                                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] shadow-lg transition-all"
+                                    onClick={closeMobileMenu}
+                                >
+                                    <Sparkles className="w-4 h-4" />
+                                    Get Started Free
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
