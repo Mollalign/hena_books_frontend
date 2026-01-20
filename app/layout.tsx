@@ -16,13 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hena Books - Discover Amazing Stories",
-  description: "A platform to explore and read books by Henok. Dive into captivating stories and discover new perspectives.",
-  keywords: ["books", "reading", "stories", "author", "Henok"],
-  authors: [{ name: "Henok" }],
+  title: "Hena Books - Biblical Resources for Spiritual Growth",
+  description: "Discover biblical teachings, devotionals, and resources to deepen your walk with Christ. A ministry dedicated to making transformative Christian literature accessible to all.",
+  keywords: ["Christian books", "biblical resources", "devotionals", "Bible study", "spiritual growth", "Protestant", "faith", "theology"],
+  authors: [{ name: "Hena Books Ministry" }],
   openGraph: {
-    title: "Hena Books - Discover Amazing Stories",
-    description: "A platform to explore and read books by Henok",
+    title: "Hena Books - Biblical Resources for Spiritual Growth",
+    description: "Discover biblical teachings, devotionals, and resources to deepen your walk with Christ.",
     type: "website",
   },
 };

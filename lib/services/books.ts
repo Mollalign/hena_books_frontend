@@ -1,11 +1,58 @@
 import api from "@/lib/api";
 
+// Book Categories - matches backend BookCategory enum
+export type BookCategory =
+  | "BIBLICAL_STUDIES"
+  | "THEOLOGY"
+  | "DEVOTIONAL"
+  | "CHRISTIAN_LIVING"
+  | "PRAYER_WORSHIP"
+  | "CHURCH_HISTORY"
+  | "APOLOGETICS"
+  | "FAMILY_MARRIAGE"
+  | "YOUTH_CHILDREN"
+  | "MISSIONS_EVANGELISM"
+  | "SPIRITUAL_GROWTH"
+  | "BIOGRAPHY_TESTIMONY"
+  | "COMMENTARY"
+  | "REFERENCE"
+  | "OTHER";
+
+// Category display labels
+export const CATEGORY_LABELS: Record<BookCategory, string> = {
+  BIBLICAL_STUDIES: "Biblical Studies",
+  THEOLOGY: "Theology",
+  DEVOTIONAL: "Devotional",
+  CHRISTIAN_LIVING: "Christian Living",
+  PRAYER_WORSHIP: "Prayer & Worship",
+  CHURCH_HISTORY: "Church History",
+  APOLOGETICS: "Apologetics",
+  FAMILY_MARRIAGE: "Family & Marriage",
+  YOUTH_CHILDREN: "Youth & Children",
+  MISSIONS_EVANGELISM: "Missions & Evangelism",
+  SPIRITUAL_GROWTH: "Spiritual Growth",
+  BIOGRAPHY_TESTIMONY: "Biography & Testimony",
+  COMMENTARY: "Commentary",
+  REFERENCE: "Reference",
+  OTHER: "Other",
+};
+
+// Get all categories as array for dropdowns
+export const BOOK_CATEGORIES = Object.entries(CATEGORY_LABELS).map(
+  ([value, label]) => ({
+    value: value as BookCategory,
+    label,
+  })
+);
+
 export interface Book {
   id: string;
   title: string;
+  author?: string;
   description?: string;
+  category: BookCategory;
+  scripture_focus?: string;
   cover_url?: string;
-  file_url: string;
   page_count?: number;
   published_date?: string;
   is_featured: boolean;
@@ -29,25 +76,53 @@ export interface BookListResponse {
 export interface BookReadResponse {
   book_id: string;
   title: string;
+  author?: string;
   file_url: string;
   page_count?: number;
 }
 
+export interface CategoryInfo {
+  value: string;
+  label: string;
+}
+
+export interface BookFilters {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  category?: BookCategory;
+  featured_only?: boolean;
+}
+
 export const booksService = {
-  // Get all published books with pagination
-  async getBooks(params?: {
-    page?: number;
-    per_page?: number;
-    search?: string;
-    featured_only?: boolean;
-  }): Promise<BookListResponse> {
+  // Get all published books with pagination and filters
+  async getBooks(params?: BookFilters): Promise<BookListResponse> {
     const response = await api.get<BookListResponse>("/books", { params });
     return response.data;
   },
 
   // Get featured books
-  async getFeaturedBooks(limit: number = 5): Promise<Book[]> {
+  async getFeaturedBooks(limit: number = 6): Promise<Book[]> {
     const response = await api.get<Book[]>("/books/featured", {
+      params: { limit },
+    });
+    return response.data;
+  },
+
+  // Get all categories
+  async getCategories(): Promise<{ categories: CategoryInfo[] }> {
+    const response = await api.get<{ categories: CategoryInfo[] }>(
+      "/books/categories"
+    );
+    return response.data;
+  },
+
+  // Get books by category
+  async getBooksByCategory(
+    category: BookCategory,
+    limit: number = 10
+  ): Promise<Book[]> {
+    const response = await api.get<Book[]>(`/books/categories/${category}`, {
       params: { limit },
     });
     return response.data;
@@ -87,9 +162,29 @@ export const booksService = {
     return response.data;
   },
 
+  // Admin: Toggle featured status
+  async toggleFeatured(id: string): Promise<Book> {
+    const response = await api.patch<Book>(
+      `/books/admin/${id}/toggle-featured`
+    );
+    return response.data;
+  },
+
+  // Admin: Toggle published status
+  async togglePublished(id: string): Promise<Book> {
+    const response = await api.patch<Book>(
+      `/books/admin/${id}/toggle-published`
+    );
+    return response.data;
+  },
+
   // Admin: Delete book
   async deleteBook(id: string): Promise<void> {
     await api.delete(`/books/admin/${id}`);
   },
 };
 
+// Helper function to get category label
+export function getCategoryLabel(category: BookCategory): string {
+  return CATEGORY_LABELS[category] || category;
+}

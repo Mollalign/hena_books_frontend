@@ -15,13 +15,14 @@ import {
 } from "lucide-react";
 import { booksService } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
+import { getApiBaseUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 // Set up PDF.js worker - use unpkg for better reliability
 if (typeof window !== "undefined") {
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
+  pdfjs.GlobalWorkerOptions.workerSrc = \`https://unpkg.com/pdfjs-dist@\${pdfjs.version}/build/pdf.worker.min.js\`;
 }
 
 export default function BookReaderPage() {
@@ -75,17 +76,18 @@ export default function BookReaderPage() {
         // Fetch PDF through API with authentication
         try {
           const token = localStorage.getItem("token");
-          const proxyUrl = `http://localhost:8000/api/v1/books/${params.id}/read/file`;
+          const apiBaseUrl = getApiBaseUrl();
+          const proxyUrl = \`\${apiBaseUrl}/api/v1/books/\${params.id}/read/file\`;
           console.log("Fetching PDF from proxy:", proxyUrl);
           
           const response = await fetch(proxyUrl, {
             headers: {
-              Authorization: `Bearer ${token}`,
+              Authorization: \`Bearer \${token}\`,
             },
           });
           
           if (!response.ok) {
-            throw new Error(`Failed to fetch PDF: ${response.status}`);
+            throw new Error(\`Failed to fetch PDF: \${response.status}\`);
           }
           
           const blob = await response.blob();
@@ -186,60 +188,65 @@ export default function BookReaderPage() {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
+    return \`\${mins}:\${secs.toString().padStart(2, "0")}\`;
   };
 
   if (loading || !bookData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#1a1614] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading book...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
+          <p className="text-[#a89a8e]">Loading book...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <div className="min-h-screen bg-[#1a1614] text-[#f5f1eb]">
       {/* Header Controls */}
-      <div className="fixed top-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-50 p-4">
+      <div className="fixed top-0 left-0 right-0 bg-[#1a1614]/95 backdrop-blur-sm z-50 p-4 border-b border-[#3d342d]">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push(`/books/${params.id}`)}
-              className="text-white hover:bg-white/10"
+              onClick={() => router.push(\`/books/\${params.id}\`)}
+              className="text-[#f5f1eb] hover:bg-[#3d342d]"
             >
               <X className="w-4 h-4 mr-2" />
               Close
             </Button>
-            <h2 className="text-lg font-semibold truncate max-w-md">
-              {bookData.title}
-            </h2>
+            <div>
+              <h2 className="text-lg font-semibold truncate max-w-md font-serif">
+                {bookData.title}
+              </h2>
+              {bookData.author && (
+                <p className="text-sm text-[#a89a8e]">by {bookData.author}</p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-400">
+            <span className="text-sm text-[#a89a8e]">
               {formatTime(readingTime)}
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={zoomOut}
-              className="text-white hover:bg-white/10"
+              className="text-[#f5f1eb] hover:bg-[#3d342d]"
             >
               <ZoomOut className="w-4 h-4" />
             </Button>
-            <span className="text-sm text-gray-400 w-12 text-center">
+            <span className="text-sm text-[#a89a8e] w-12 text-center">
               {Math.round(scale * 100)}%
             </span>
             <Button
               variant="ghost"
               size="sm"
               onClick={zoomIn}
-              className="text-white hover:bg-white/10"
+              className="text-[#f5f1eb] hover:bg-[#3d342d]"
             >
               <ZoomIn className="w-4 h-4" />
             </Button>
@@ -247,7 +254,7 @@ export default function BookReaderPage() {
               variant="ghost"
               size="sm"
               onClick={toggleFullscreen}
-              className="text-white hover:bg-white/10"
+              className="text-[#f5f1eb] hover:bg-[#3d342d]"
             >
               {isFullscreen ? (
                 <Minimize className="w-4 h-4" />
@@ -272,7 +279,7 @@ export default function BookReaderPage() {
                   setPdfLoading(true);
                   window.location.reload();
                 }}
-                className="mt-4"
+                className="mt-4 bg-[var(--primary-500)] hover:bg-[var(--primary-600)]"
               >
                 Retry
               </Button>
@@ -294,29 +301,28 @@ export default function BookReaderPage() {
                   name: error.name,
                   stack: error.stack,
                 });
-                setPdfError(`Failed to load PDF: ${errorMessage}. The file may be corrupted or inaccessible.`);
+                setPdfError(\`Failed to load PDF: \${errorMessage}. The file may be corrupted or inaccessible.\`);
                 setPdfLoading(false);
                 toast.error("Failed to load PDF file");
               }}
               loading={
                 <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                  <p className="text-gray-400">Loading PDF...</p>
-                  <p className="text-gray-500 text-sm mt-2 break-all max-w-2xl mx-auto">{bookData.file_url}</p>
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
+                  <p className="text-[#a89a8e]">Loading PDF...</p>
                 </div>
               }
               options={{
-                cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                cMapUrl: \`https://unpkg.com/pdfjs-dist@\${pdfjs.version}/cmaps/\`,
                 cMapPacked: true,
-                standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+                standardFontDataUrl: \`https://unpkg.com/pdfjs-dist@\${pdfjs.version}/standard_fonts/\`,
                 httpHeaders: {},
                 withCredentials: false,
               }}
             >
               {pdfLoading && (
                 <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-2"></div>
-                  <p className="text-gray-400 text-sm">Rendering page...</p>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-400)] mx-auto mb-2"></div>
+                  <p className="text-[#a89a8e] text-sm">Rendering page...</p>
                 </div>
               )}
               <Page
@@ -334,35 +340,35 @@ export default function BookReaderPage() {
                 }}
                 loading={
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto"></div>
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary-400)] mx-auto"></div>
                   </div>
                 }
               />
             </Document>
           ) : (
             <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="text-gray-400">Preparing PDF...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
+              <p className="text-[#a89a8e]">Preparing PDF...</p>
             </div>
           )}
         </div>
       </div>
 
       {/* Footer Controls */}
-      <div className="fixed bottom-0 left-0 right-0 bg-black/80 backdrop-blur-sm z-50 p-4">
+      <div className="fixed bottom-0 left-0 right-0 bg-[#1a1614]/95 backdrop-blur-sm z-50 p-4 border-t border-[#3d342d]">
         <div className="container mx-auto flex items-center justify-between">
           <Button
             variant="ghost"
             size="sm"
             onClick={goToPrevPage}
             disabled={pageNumber <= 1}
-            className="text-white hover:bg-white/10 disabled:opacity-50"
+            className="text-[#f5f1eb] hover:bg-[#3d342d] disabled:opacity-50"
           >
             <ChevronLeft className="w-4 h-4 mr-2" />
             Previous
           </Button>
 
-          <span className="text-sm text-gray-400">
+          <span className="text-sm text-[#a89a8e]">
             Page {pageNumber} of {numPages}
           </span>
 
@@ -371,7 +377,7 @@ export default function BookReaderPage() {
             size="sm"
             onClick={goToNextPage}
             disabled={pageNumber >= numPages}
-            className="text-white hover:bg-white/10 disabled:opacity-50"
+            className="text-[#f5f1eb] hover:bg-[#3d342d] disabled:opacity-50"
           >
             Next
             <ChevronRight className="w-4 h-4 ml-2" />
@@ -381,4 +387,3 @@ export default function BookReaderPage() {
     </div>
   );
 }
-

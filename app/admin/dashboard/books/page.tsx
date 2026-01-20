@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, BookOpen } from "lucide-react";
-import { booksService, Book } from "@/lib/services/books";
+import { Plus, Edit, Trash2, Eye, BookOpen, User, Tag } from "lucide-react";
+import { booksService, Book, BookCategory, BOOK_CATEGORIES, getCategoryLabel } from "@/lib/services/books";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -35,7 +35,10 @@ export default function AdminBooksPage() {
 
   const [formData, setFormData] = useState({
     title: "",
+    author: "",
     description: "",
+    category: "OTHER" as BookCategory,
+    scripture_focus: "",
     page_count: "",
     published_date: "",
     is_featured: false,
@@ -72,7 +75,10 @@ export default function AdminBooksPage() {
       setUploading(true);
       const uploadFormData = new FormData();
       uploadFormData.append("title", formData.title);
+      uploadFormData.append("author", formData.author);
       uploadFormData.append("description", formData.description);
+      uploadFormData.append("category", formData.category);
+      uploadFormData.append("scripture_focus", formData.scripture_focus);
       uploadFormData.append("page_count", formData.page_count);
       uploadFormData.append("published_date", formData.published_date);
       uploadFormData.append("is_featured", String(formData.is_featured));
@@ -87,7 +93,10 @@ export default function AdminBooksPage() {
       setUploadDialogOpen(false);
       setFormData({
         title: "",
+        author: "",
         description: "",
+        category: "OTHER",
+        scripture_focus: "",
         page_count: "",
         published_date: "",
         is_featured: false,
@@ -124,25 +133,25 @@ export default function AdminBooksPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-foreground">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-foreground font-serif">
             Book Management
           </h1>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Manage all books in the platform
+            Manage all biblical resources in the platform
           </p>
         </div>
         <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="w-full sm:w-auto bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] text-white shadow-md">
+            <Button className="w-full sm:w-auto bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white shadow-md">
               <Plus className="w-4 h-4 mr-2" />
               Upload Book
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl sm:text-2xl">Upload New Book</DialogTitle>
+              <DialogTitle className="text-xl sm:text-2xl font-serif">Upload New Book</DialogTitle>
               <DialogDescription className="text-sm sm:text-base">
-                Upload a PDF book file with optional cover image
+                Upload a biblical resource with PDF file and optional cover image
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleUpload} className="space-y-4 sm:space-y-6">
@@ -154,10 +163,61 @@ export default function AdminBooksPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, title: e.target.value })
                   }
+                  placeholder="e.g., The Purpose Driven Life"
                   required
                   className="mt-1"
                 />
               </div>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="author" className="text-sm font-medium">Author</Label>
+                  <Input
+                    id="author"
+                    value={formData.author}
+                    onChange={(e) =>
+                      setFormData({ ...formData, author: e.target.value })
+                    }
+                    placeholder="e.g., Rick Warren"
+                    className="mt-1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="category" className="text-sm font-medium">Category *</Label>
+                  <select
+                    id="category"
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value as BookCategory })
+                    }
+                    className="w-full mt-1 px-3 py-2 border border-[var(--border)] rounded-md bg-background text-foreground"
+                    required
+                  >
+                    {BOOK_CATEGORIES.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="scripture_focus" className="text-sm font-medium">Scripture Focus</Label>
+                <Input
+                  id="scripture_focus"
+                  value={formData.scripture_focus}
+                  onChange={(e) =>
+                    setFormData({ ...formData, scripture_focus: e.target.value })
+                  }
+                  placeholder="e.g., Romans 8:28, Philippians 4:13"
+                  className="mt-1"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Key Bible verses this book focuses on
+                </p>
+              </div>
+              
               <div>
                 <Label htmlFor="description" className="text-sm font-medium">Description</Label>
                 <textarea
@@ -166,9 +226,11 @@ export default function AdminBooksPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
                   }
+                  placeholder="Describe the book's content and spiritual value..."
                   className="w-full min-h-[100px] px-3 py-2 border border-[var(--border)] rounded-md bg-background text-foreground mt-1 resize-y"
                 />
               </div>
+              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="page_count" className="text-sm font-medium">Page Count</Label>
@@ -198,6 +260,7 @@ export default function AdminBooksPage() {
                   />
                 </div>
               </div>
+              
               <div className="flex flex-col sm:flex-row gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -225,6 +288,7 @@ export default function AdminBooksPage() {
                   <span className="text-sm">Published</span>
                 </label>
               </div>
+              
               <div>
                 <Label htmlFor="book_file" className="text-sm font-medium">PDF File *</Label>
                 <Input
@@ -241,6 +305,7 @@ export default function AdminBooksPage() {
                   className="mt-1"
                 />
               </div>
+              
               <div>
                 <Label htmlFor="cover_file" className="text-sm font-medium">Cover Image</Label>
                 <Input
@@ -256,10 +321,11 @@ export default function AdminBooksPage() {
                   className="mt-1"
                 />
               </div>
+              
               <Button 
                 type="submit" 
                 disabled={uploading} 
-                className="w-full bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)] text-white"
+                className="w-full bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white"
               >
                 {uploading ? "Uploading..." : "Upload Book"}
               </Button>
@@ -277,8 +343,8 @@ export default function AdminBooksPage() {
       ) : books.length === 0 ? (
         <div className="text-center py-12 border border-[var(--border)] rounded-lg bg-background">
           <BookOpen className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2 text-foreground">No books found</h3>
-          <p className="text-muted-foreground mb-4">Upload your first book to get started</p>
+          <h3 className="text-lg font-semibold mb-2 text-foreground font-serif">No books found</h3>
+          <p className="text-muted-foreground mb-4">Upload your first biblical resource to get started</p>
         </div>
       ) : (
         <>
@@ -290,6 +356,8 @@ export default function AdminBooksPage() {
                   <TableRow>
                     <TableHead>Cover</TableHead>
                     <TableHead>Title</TableHead>
+                    <TableHead>Author</TableHead>
+                    <TableHead>Category</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Pages</TableHead>
                     <TableHead>Created</TableHead>
@@ -309,12 +377,27 @@ export default function AdminBooksPage() {
                             className="object-cover rounded"
                           />
                         ) : (
-                          <div className="w-[50px] h-[75px] bg-muted rounded flex items-center justify-center">
-                            📚
+                          <div className="w-[50px] h-[75px] bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded flex items-center justify-center">
+                            <BookOpen className="w-6 h-6 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">{book.title}</TableCell>
+                      <TableCell className="font-medium font-serif">{book.title}</TableCell>
+                      <TableCell>
+                        {book.author ? (
+                          <span className="flex items-center gap-1 text-sm">
+                            <User className="w-3 h-3" />
+                            {book.author}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="category-badge">
+                          {getCategoryLabel(book.category)}
+                        </span>
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
                           {book.is_published && (
@@ -323,8 +406,8 @@ export default function AdminBooksPage() {
                             </span>
                           )}
                           {book.is_featured && (
-                            <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded font-medium">
-                              Featured
+                            <span className="px-2 py-1 bg-[var(--accent-100)] dark:bg-[var(--accent-900)] text-[var(--accent-700)] dark:text-[var(--accent-300)] text-xs rounded font-medium">
+                              ⭐ Featured
                             </span>
                           )}
                         </div>
@@ -335,7 +418,7 @@ export default function AdminBooksPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Link href={`/books/${book.id}`}>
+                          <Link href={\`/books/\${book.id}\`}>
                             <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -374,23 +457,32 @@ export default function AdminBooksPage() {
                       className="object-cover rounded flex-shrink-0"
                     />
                   ) : (
-                    <div className="w-[60px] h-[90px] bg-muted rounded flex items-center justify-center flex-shrink-0">
-                      📚
+                    <div className="w-[60px] h-[90px] bg-[var(--primary-100)] dark:bg-[var(--primary-900)] rounded flex items-center justify-center flex-shrink-0">
+                      <BookOpen className="w-8 h-8 text-[var(--primary-600)] dark:text-[var(--primary-400)]" />
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-base mb-2 text-foreground line-clamp-2">
+                    <h3 className="font-semibold text-base mb-1 text-foreground line-clamp-2 font-serif">
                       {book.title}
                     </h3>
+                    {book.author && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mb-2">
+                        <User className="w-3 h-3" />
+                        {book.author}
+                      </p>
+                    )}
                     <div className="flex flex-wrap gap-2 mb-2">
+                      <span className="category-badge text-xs">
+                        {getCategoryLabel(book.category)}
+                      </span>
                       {book.is_published && (
                         <span className="px-2 py-1 bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 text-xs rounded font-medium">
                           Published
                         </span>
                       )}
                       {book.is_featured && (
-                        <span className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 text-xs rounded font-medium">
-                          Featured
+                        <span className="px-2 py-1 bg-[var(--accent-100)] dark:bg-[var(--accent-900)] text-[var(--accent-700)] dark:text-[var(--accent-300)] text-xs rounded font-medium">
+                          ⭐ Featured
                         </span>
                       )}
                     </div>
@@ -401,7 +493,7 @@ export default function AdminBooksPage() {
                   </div>
                 </div>
                 <div className="flex gap-2 pt-2 border-t border-[var(--border)]">
-                  <Link href={`/books/${book.id}`} className="flex-1">
+                  <Link href={\`/books/\${book.id}\`} className="flex-1">
                     <Button variant="outline" size="sm" className="w-full">
                       <Eye className="w-4 h-4 mr-2" />
                       View
@@ -425,4 +517,3 @@ export default function AdminBooksPage() {
     </div>
   );
 }
-
