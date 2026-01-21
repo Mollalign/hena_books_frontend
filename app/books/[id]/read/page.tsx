@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   X,
@@ -9,6 +9,7 @@ import {
   Minimize,
   Download,
   BookOpen,
+  Loader2,
 } from "lucide-react";
 import { booksService } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
@@ -16,6 +17,9 @@ import { getApiBaseUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+
+// Lazy load the PDF viewer to reduce initial bundle size
+const SecurePdfViewer = lazy(() => import("@/components/books/SecurePdfViewer"));
 
 export default function BookReaderPage() {
   const params = useParams();
@@ -28,9 +32,13 @@ export default function BookReaderPage() {
   const [error, setError] = useState<string | null>(null);
   const [sessionId, setSessionId] = useState<string | number | null>(null);
   const [readingTime, setReadingTime] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Check if user is admin
+  const isAdmin = user?.role === "admin";
 
   useEffect(() => {
     const loadBook = async () => {
@@ -121,7 +129,7 @@ export default function BookReaderPage() {
         if (readingTime > 0) {
           analyticsService
             .updateProgress(sessionId, {
-              last_page_read: 1,
+              last_page_read: currentPage,
               time_spent_seconds: readingTime,
             })
             .catch(console.error);
@@ -135,12 +143,12 @@ export default function BookReaderPage() {
     if (sessionId && readingTime > 0 && readingTime % 30 === 0) {
       analyticsService
         .updateProgress(sessionId, {
-          last_page_read: 1,
+          last_page_read: currentPage,
           time_spent_seconds: 30,
         })
         .catch(console.error);
     }
-  }, [sessionId, readingTime]);
+  }, [sessionId, readingTime, currentPage]);
 
   const toggleFullscreen = async () => {
     try {
@@ -173,20 +181,31 @@ export default function BookReaderPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const handleDownload = () => {
+  // Admin-only download handler
+  const handleDownload = async () => {
+    if (!isAdmin) {
+      toast.error("Only administrators can download books");
+      return;
+    }
+    
     if (pdfUrl && bookData) {
       const link = document.createElement("a");
       link.href = pdfUrl;
       link.download = `${bookData.title}.pdf`;
       link.click();
+      toast.success("Download started");
     }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page + 1); // react-pdf-viewer uses 0-indexed pages
   };
 
   if (loading) {
     return (
       <div className="min-h-screen bg-[#1a1614] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
+          <Loader2 className="h-12 w-12 animate-spin text-[var(--primary-400)] mx-auto mb-4" />
           <p className="text-[#a89a8e]">Loading book...</p>
         </div>
       </div>
@@ -216,7 +235,7 @@ export default function BookReaderPage() {
       className="min-h-screen bg-[#1a1614] text-[#f5f1eb] flex flex-col"
     >
       {/* Header Controls */}
-      <div className="bg-[#1a1614]/95 backdrop-blur-sm z-50 p-4 border-b border-[#3d342d]">
+      <div className="bg-[#1a1614]/95 backdrop-blur-sm z-50 p-3 border-b border-[#3d342d]">
         <div className="container mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
@@ -245,15 +264,20 @@ export default function BookReaderPage() {
             <span className="text-sm text-[#a89a8e] mr-2">
               Reading: {formatTime(readingTime)}
             </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleDownload}
-              className="text-[#f5f1eb] hover:bg-[#3d342d]"
-              title="Download PDF"
-            >
-              <Download className="w-4 h-4" />
-            </Button>
+            
+            {/* Only show download button for admin users */}
+            {isAdmin && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDownload}
+                className="text-[#f5f1eb] hover:bg-[#3d342d]"
+                title="Download PDF (Admin only)"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+            )}
+            
             <Button
               variant="ghost"
               size="sm"
@@ -272,39 +296,27 @@ export default function BookReaderPage() {
       </div>
 
       {/* PDF Viewer */}
-      <div className="flex-1 bg-[#2d2520]">
+      <div className="flex-1 bg-[#2d2520]" style={{ height: "calc(100vh - 64px)" }}>
         {pdfUrl ? (
-          <object
-            data={pdfUrl}
-            type="application/pdf"
-            className="w-full h-full min-h-[calc(100vh-80px)]"
-            title={bookData.title}
-          >
-            {/* Fallback for browsers that don't support object */}
-            <embed
-              src={pdfUrl}
-              type="application/pdf"
-              className="w-full h-full min-h-[calc(100vh-80px)]"
-            />
-            {/* Final fallback */}
-            <div className="flex items-center justify-center h-full min-h-[calc(100vh-80px)]">
-              <div className="text-center p-8">
-                <AlertCircle className="w-16 h-16 text-[#a89a8e] mx-auto mb-4" />
-                <p className="text-[#a89a8e] mb-4">
-                  Your browser cannot display this PDF.
-                </p>
-                <Button
-                  onClick={handleDownload}
-                  className="bg-[var(--primary-500)] hover:bg-[var(--primary-600)]"
-                >
-                  <Download className="w-4 h-4 mr-2" />
-                  Download PDF
-                </Button>
+          <Suspense
+            fallback={
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <Loader2 className="h-12 w-12 animate-spin text-[var(--primary-400)] mx-auto mb-4" />
+                  <p className="text-[#a89a8e]">Loading PDF viewer...</p>
+                </div>
               </div>
-            </div>
-          </object>
+            }
+          >
+            <SecurePdfViewer
+              pdfUrl={pdfUrl}
+              title={bookData.title}
+              isAdmin={isAdmin}
+              onPageChange={handlePageChange}
+            />
+          </Suspense>
         ) : (
-          <div className="flex items-center justify-center h-full min-h-[calc(100vh-80px)]">
+          <div className="flex items-center justify-center h-full">
             <div className="text-center">
               <AlertCircle className="w-16 h-16 text-[#a89a8e] mx-auto mb-4" />
               <p className="text-[#a89a8e]">PDF not available</p>
