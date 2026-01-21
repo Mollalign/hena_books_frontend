@@ -307,7 +307,7 @@ export default function Home() {
                   </h2>
 
                   <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                    ብፁዓን (Hena Books) አማኞች መጽሐፍ ቅዱሳዊ በሆኑ ግብዓቶች እንዲታጠቁ የተቋቋመ አገልግሎት ነው።
+                    ብፅዕና (Hena Books) አማኞች መጽሐፍ ቅዱሳዊ በሆኑ ግብዓቶች እንዲታጠቁ የተቋቋመ አገልግሎት ነው።
                     ሕይወትን የሚለውጡ ክርስቲያናዊ ጽሑፎች በየትኛውም ቦታና የገንዘብ ሁኔታ ላይ ላለ ሰው ሁሉ በቀላሉ መድረስ አለባቸው ብለን እናምናለን።
                   </p>
 

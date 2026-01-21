@@ -57,17 +57,16 @@ export default function Navbar() {
 
     return (
         <nav
-            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-                isScrolled || isMobileMenuOpen
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${isScrolled || isMobileMenuOpen
                     ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-[var(--border)]"
                     : "bg-transparent"
-            }`}
+                }`}
         >
             <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex items-center justify-between h-16 md:h-20">
                     {/* Logo */}
-                    <Link 
-                        href="/" 
+                    <Link
+                        href="/"
                         className="flex items-center gap-2.5 group"
                         onClick={closeMobileMenu}
                     >
@@ -79,7 +78,7 @@ export default function Navbar() {
                         </div>
                         <div className="flex flex-col">
                             <span className="text-lg md:text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-800)] dark:from-[var(--primary-400)] dark:to-[var(--primary-300)]">
-                                Hena Books
+                                Hena Books (ብፅዕና)
                             </span>
                             <span className="text-[10px] text-muted-foreground font-medium tracking-wide hidden sm:block">
                                 Biblical Resources
@@ -91,9 +90,9 @@ export default function Navbar() {
                     <div className="hidden md:flex items-center">
                         <div className="flex items-center gap-1 px-1.5 py-1.5 rounded-full bg-[var(--muted)]/50 backdrop-blur-sm border border-[var(--border)]">
                             {navLinks.map((link) => (
-                                <Link 
+                                <Link
                                     key={link.href}
-                                    href={link.href} 
+                                    href={link.href}
                                     className="px-4 py-2 rounded-full text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-background hover:shadow-sm transition-all duration-200"
                                 >
                                     {link.label}
@@ -121,8 +120,8 @@ export default function Navbar() {
                         {user ? (
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button 
-                                        variant="ghost" 
+                                    <Button
+                                        variant="ghost"
                                         className="relative h-11 gap-2 pl-2 pr-3 rounded-full bg-[var(--muted)]/50 hover:bg-[var(--muted)] border border-[var(--border)] transition-all"
                                     >
                                         <Avatar className="h-7 w-7 border-2 border-[var(--primary-200)] dark:border-[var(--primary-700)]">
@@ -161,7 +160,7 @@ export default function Navbar() {
                                         </DropdownMenuItem>
                                     )}
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
+                                    <DropdownMenuItem
                                         onClick={logout}
                                         className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                                     >
@@ -172,13 +171,13 @@ export default function Navbar() {
                             </DropdownMenu>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <Link 
+                                <Link
                                     href="/login"
                                     className="px-4 py-2.5 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     Sign In
                                 </Link>
-                                <Link 
+                                <Link
                                     href="/register"
                                     className="group relative px-5 py-2.5 rounded-full text-sm font-semibold text-white overflow-hidden"
                                 >
@@ -216,16 +215,15 @@ export default function Navbar() {
 
                 {/* Mobile Menu */}
                 <div
-                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-                        isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
-                    }`}
+                    className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isMobileMenuOpen ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
+                        }`}
                 >
                     <div className="py-4 space-y-2 border-t border-[var(--border)] bg-background rounded-b-2xl shadow-lg">
                         {/* Navigation Links */}
                         {navLinks.map((link) => (
-                            <Link 
+                            <Link
                                 key={link.href}
-                                href={link.href} 
+                                href={link.href}
                                 className="flex items-center justify-between px-4 py-3 rounded-xl text-base font-medium text-foreground hover:bg-[var(--muted)] transition-all"
                                 onClick={closeMobileMenu}
                             >
@@ -233,9 +231,9 @@ export default function Navbar() {
                                 <ChevronRight className="w-4 h-4 text-muted-foreground" />
                             </Link>
                         ))}
-                        
+
                         <div className="border-t border-[var(--border)] my-3" />
-                        
+
                         {user ? (
                             <>
                                 {/* User Info Card */}
@@ -294,15 +292,15 @@ export default function Navbar() {
                             </>
                         ) : (
                             <div className="flex flex-col gap-2 px-2 pt-2">
-                                <Link 
-                                    href="/login" 
+                                <Link
+                                    href="/login"
                                     className="flex items-center justify-center px-4 py-3 rounded-xl text-base font-semibold text-foreground bg-[var(--muted)] hover:bg-[var(--muted)]/80 transition-all"
                                     onClick={closeMobileMenu}
                                 >
                                     Sign In
                                 </Link>
-                                <Link 
-                                    href="/register" 
+                                <Link
+                                    href="/register"
                                     className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-base font-semibold text-white bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] shadow-lg transition-all"
                                     onClick={closeMobileMenu}
                                 >

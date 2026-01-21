@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BookOpen, Mail, Heart, Send, ArrowRight, Github, Twitter, Facebook } from "lucide-react";
+import { BookOpen, Mail, Heart, Send, ArrowRight, Github, Twitter, Facebook, MailIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -108,7 +108,7 @@ export default function Footer() {
               A ministry dedicated to providing biblically-sound resources for spiritual growth and deeper understanding of God's Word.
             </p>
             <div className="flex gap-3">
-              {[Twitter, Facebook, Github].map((Icon, idx) => (
+              {[Twitter, Facebook, Github, Send].map((Icon, idx) => (
                 <a
                   key={idx}
                   href="#"
