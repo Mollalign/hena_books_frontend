@@ -24,7 +24,7 @@ const SecurePdfViewer = lazy(() => import("@/components/books/SecurePdfViewer"))
 export default function BookReaderPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [bookData, setBookData] = useState<any>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -41,13 +41,43 @@ export default function BookReaderPage() {
   const isAdmin = user?.role === "admin";
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking
+    if (authLoading) {
+      return;
+    }
+
     const loadBook = async () => {
       // Check if user is logged in
       const token = localStorage.getItem("token");
-      if (!token || !user) {
+      
+      // Only redirect if auth is done loading and there's no token or user
+      if (!token) {
         toast.error("Please login to read books");
         router.push("/login");
         return;
+      }
+
+      // If token exists but user is null, try to refresh user first
+      if (!user) {
+        try {
+          // Wait a bit for auth context to potentially load user
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Check token again - if still no user, redirect
+          const stillNoUser = !localStorage.getItem("token");
+          if (stillNoUser) {
+            toast.error("Please login to read books");
+            router.push("/login");
+            return;
+          }
+        } catch (err) {
+          // If refresh fails, check token one more time
+          if (!localStorage.getItem("token")) {
+            toast.error("Please login to read books");
+            router.push("/login");
+            return;
+          }
+        }
       }
 
       try {
@@ -136,7 +166,7 @@ export default function BookReaderPage() {
         }
       }
     };
-  }, [params.id, user, router]);
+  }, [params.id, user, router, authLoading]);
 
   // Update reading progress periodically
   useEffect(() => {
@@ -201,12 +231,15 @@ export default function BookReaderPage() {
     setCurrentPage(page + 1); // react-pdf-viewer uses 0-indexed pages
   };
 
-  if (loading) {
+  // Show loading while auth is initializing or book is loading
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-[#1a1614] flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-[var(--primary-400)] mx-auto mb-4" />
-          <p className="text-[#a89a8e]">Loading book...</p>
+          <p className="text-[#a89a8e]">
+            {authLoading ? "Verifying authentication..." : "Loading book..."}
+          </p>
         </div>
       </div>
     );
@@ -261,10 +294,6 @@ export default function BookReaderPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-[#a89a8e] mr-2">
-              Reading: {formatTime(readingTime)}
-            </span>
-            
             {/* Only show download button for admin users */}
             {isAdmin && (
               <Button
@@ -292,6 +321,15 @@ export default function BookReaderPage() {
               )}
             </Button>
           </div>
+        </div>
+      </div>
+
+      {/* Reading Time - Background indicator (bottom right corner) */}
+      <div className="fixed bottom-2 right-2 sm:bottom-4 sm:right-4 z-40 pointer-events-none">
+        <div className="bg-[#1a1614]/80 backdrop-blur-sm border border-[#3d342d]/50 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 shadow-lg">
+          <span className="text-[10px] sm:text-xs text-[#a89a8e] font-medium">
+            Reading: {formatTime(readingTime)}
+          </span>
         </div>
       </div>
 

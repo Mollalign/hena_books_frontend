@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useState, useRef, useMemo } from "react";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Menu } from "lucide-react";
+import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Menu, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface SecurePdfViewerProps {
@@ -15,12 +15,12 @@ interface SecurePdfViewerProps {
  * Secure PDF Viewer Component using PDF.js directly
  * 
  * Features:
+ * - Continuous scrollable PDF (all pages rendered)
+ * - Zoom with mouse wheel and pinch gestures
  * - Mobile-first responsive design
  * - Uses PDF.js from CDN (no webpack/Turbopack issues)
  * - Download/print disabled for non-admin users
  * - Context menu disabled to prevent right-click save
- * - Custom toolbar with reading-focused controls
- * - Optimized rendering to prevent blinking/flickering
  */
 export default function SecurePdfViewer({
   pdfUrl,
@@ -30,18 +30,15 @@ export default function SecurePdfViewer({
 }: SecurePdfViewerProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [pdfDoc, setPdfDoc] = useState<any>(null);
-  const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isRendering, setIsRendering] = useState(false);
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
   const containerRef = useRef<HTMLDivElement>(null);
-  const renderTaskRef = useRef<any>(null);
-  const currentPageRef = useRef<number>(1);
-  const currentScaleRef = useRef<number>(1.0);
+  const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
+  const renderTasksRef = useRef<Map<number, any>>(new Map());
 
   // Calculate responsive scale based on screen size (mobile-first)
   const calculateInitialScale = useCallback(() => {
@@ -96,7 +93,6 @@ export default function SecurePdfViewer({
     const handleResize = () => {
       const newScale = calculateInitialScale();
       setScale(newScale);
-      currentScaleRef.current = newScale;
     };
 
     window.addEventListener("resize", handleResize);
@@ -127,8 +123,6 @@ export default function SecurePdfViewer({
 
         setPdfDoc(pdf);
         setNumPages(pdf.numPages);
-        setPageNum(1);
-        currentPageRef.current = 1;
         setLoading(false);
       } catch (err: any) {
         console.error("Error loading PDF:", err);
@@ -140,45 +134,32 @@ export default function SecurePdfViewer({
     loadPdf();
   }, [isMounted, pdfUrl]);
 
-  // Optimized render function to prevent blinking
-  const renderPage = useCallback(async (pageNumber: number, scaleValue: number) => {
-    if (!pdfDoc || !canvasRef.current || isRendering) return;
+  // Render a single page
+  const renderPage = useCallback(async (pageNumber: number) => {
+    if (!pdfDoc || renderedPages.has(pageNumber)) return;
 
-    // Cancel previous render task if exists
-    if (renderTaskRef.current) {
-      renderTaskRef.current.cancel();
-      renderTaskRef.current = null;
-    }
-
-    setIsRendering(true);
+    const canvas = canvasRefs.current.get(pageNumber);
+    if (!canvas) return;
 
     try {
       const page = await pdfDoc.getPage(pageNumber);
-      const canvas = canvasRef.current;
-      if (!canvas) {
-        setIsRendering(false);
-        return;
-      }
-
       const context = canvas.getContext("2d", { alpha: false });
-      if (!context) {
-        setIsRendering(false);
-        return;
+      if (!context) return;
+
+      // Cancel previous render if exists
+      const existingTask = renderTasksRef.current.get(pageNumber);
+      if (existingTask) {
+        existingTask.cancel();
       }
 
-      // Clear canvas first
-      context.clearRect(0, 0, canvas.width, canvas.height);
-
-      const viewport = page.getViewport({ scale: scaleValue });
-      
-      // Set canvas dimensions (use device pixel ratio for crisp rendering)
+      const viewport = page.getViewport({ scale });
       const dpr = window.devicePixelRatio || 1;
+      
       canvas.width = viewport.width * dpr;
       canvas.height = viewport.height * dpr;
       canvas.style.width = `${viewport.width}px`;
       canvas.style.height = `${viewport.height}px`;
 
-      // Scale context for high DPI displays
       context.scale(dpr, dpr);
 
       const renderContext = {
@@ -187,38 +168,79 @@ export default function SecurePdfViewer({
       };
 
       const renderTask = page.render(renderContext);
-      renderTaskRef.current = renderTask;
+      renderTasksRef.current.set(pageNumber, renderTask);
       
       await renderTask.promise;
       
-      currentPageRef.current = pageNumber;
-      currentScaleRef.current = scaleValue;
+      setRenderedPages((prev) => new Set([...prev, pageNumber]));
       
-      if (onPageChange) {
-        onPageChange(pageNumber);
+      // Track current page for analytics
+      if (onPageChange && containerRef.current) {
+        const scrollTop = containerRef.current.scrollTop;
+        const pageHeight = viewport.height;
+        const currentPage = Math.floor(scrollTop / pageHeight) + 1;
+        if (currentPage !== pageNumber) {
+          onPageChange(currentPage);
+        }
       }
     } catch (err: any) {
-      // Ignore cancellation errors
       if (err.name !== "RenderingCancelledException") {
-        console.error("Error rendering page:", err);
+        console.error(`Error rendering page ${pageNumber}:`, err);
       }
-    } finally {
-      setIsRendering(false);
-      renderTaskRef.current = null;
     }
-  }, [pdfDoc, isRendering, onPageChange]);
+  }, [pdfDoc, scale, renderedPages, onPageChange]);
 
-  // Render PDF page - optimized to prevent blinking
+  // Render all pages when PDF loads or scale changes
   useEffect(() => {
-    if (!pdfDoc || pageNum < 1) return;
+    if (!pdfDoc || numPages === 0) return;
 
-    // Only render if page or scale actually changed
-    if (currentPageRef.current === pageNum && currentScaleRef.current === scale) {
-      return;
+    // Render all pages
+    for (let i = 1; i <= numPages; i++) {
+      if (!renderedPages.has(i)) {
+        renderPage(i);
+      }
     }
+  }, [pdfDoc, numPages, scale, renderPage, renderedPages]);
 
-    renderPage(pageNum, scale);
-  }, [pdfDoc, pageNum, scale, renderPage]);
+  // Re-render all pages when scale changes
+  useEffect(() => {
+    if (!pdfDoc || numPages === 0) return;
+    
+    // Clear rendered pages and re-render with new scale
+    setRenderedPages(new Set());
+    renderTasksRef.current.clear();
+    
+    // Small delay to ensure canvas refs are ready
+    setTimeout(() => {
+      for (let i = 1; i <= numPages; i++) {
+        renderPage(i);
+      }
+    }, 100);
+  }, [scale]);
+
+  // Intersection Observer for lazy loading pages
+  useEffect(() => {
+    if (!pdfDoc || numPages === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const pageNum = parseInt(entry.target.getAttribute("data-page") || "0");
+            if (pageNum > 0 && !renderedPages.has(pageNum)) {
+              renderPage(pageNum);
+            }
+          }
+        });
+      },
+      { rootMargin: "200px" }
+    );
+
+    const pageElements = document.querySelectorAll("[data-page]");
+    pageElements.forEach((el) => observer.observe(el));
+
+    return () => observer.disconnect();
+  }, [pdfDoc, numPages, renderedPages, renderPage]);
 
   // Prevent context menu (right-click) for non-admin users
   const handleContextMenu = useCallback(
@@ -244,17 +266,8 @@ export default function SecurePdfViewer({
           return false;
         }
       }
-
-      // Navigation with arrow keys
-      if (e.key === "ArrowLeft" && pageNum > 1) {
-        e.preventDefault();
-        setPageNum((prev) => prev - 1);
-      } else if (e.key === "ArrowRight" && pageNum < numPages) {
-        e.preventDefault();
-        setPageNum((prev) => prev + 1);
-      }
     },
-    [isAdmin, pageNum, numPages]
+    [isAdmin]
   );
 
   useEffect(() => {
@@ -267,33 +280,77 @@ export default function SecurePdfViewer({
     };
   }, [handleContextMenu, handleKeyDown]);
 
-  const goToPrevPage = useCallback(() => {
-    if (pageNum > 1) {
-      setPageNum((prev) => prev - 1);
-    }
-  }, [pageNum]);
+  // Zoom with mouse wheel
+  useEffect(() => {
+    if (!containerRef.current) return;
 
-  const goToNextPage = useCallback(() => {
-    if (pageNum < numPages) {
-      setPageNum((prev) => prev + 1);
-    }
-  }, [pageNum, numPages]);
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        setScale((prev) => {
+          const newScale = Math.max(0.5, Math.min(3, prev + delta));
+          return newScale;
+        });
+      }
+    };
+
+    containerRef.current.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      containerRef.current?.removeEventListener("wheel", handleWheel);
+    };
+  }, []);
+
+  // Pinch zoom for touch devices
+  useEffect(() => {
+    if (!containerRef.current) return;
+
+    let initialDistance = 0;
+    let initialScale = scale;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        initialDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialScale = scale;
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const currentDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const scaleChange = currentDistance / initialDistance;
+        const newScale = Math.max(0.5, Math.min(3, initialScale * scaleChange));
+        setScale(newScale);
+      }
+    };
+
+    containerRef.current.addEventListener("touchstart", handleTouchStart, { passive: true });
+    containerRef.current.addEventListener("touchmove", handleTouchMove, { passive: false });
+
+    return () => {
+      containerRef.current?.removeEventListener("touchstart", handleTouchStart);
+      containerRef.current?.removeEventListener("touchmove", handleTouchMove);
+    };
+  }, [scale]);
 
   const zoomIn = useCallback(() => {
-    setScale((prev) => {
-      const newScale = Math.min(prev + 0.25, 3);
-      currentScaleRef.current = newScale;
-      return newScale;
-    });
+    setScale((prev) => Math.min(prev + 0.25, 3));
   }, []);
 
   const zoomOut = useCallback(() => {
-    setScale((prev) => {
-      const newScale = Math.max(prev - 0.25, 0.5);
-      currentScaleRef.current = newScale;
-      return newScale;
-    });
+    setScale((prev) => Math.max(prev - 0.25, 0.5));
   }, []);
+
+  const resetZoom = useCallback(() => {
+    setScale(calculateInitialScale());
+  }, [calculateInitialScale]);
 
   const toggleFullscreen = async () => {
     if (!containerRef.current) return;
@@ -309,51 +366,28 @@ export default function SecurePdfViewer({
     }
   };
 
-  // Mobile swipe gestures
+  // Track scroll position for page change
   useEffect(() => {
-    if (!canvasRef.current) return;
+    if (!containerRef.current || !onPageChange || numPages === 0) return;
 
-    let touchStartX = 0;
-    let touchStartY = 0;
-    const minSwipeDistance = 50;
+    const handleScroll = () => {
+      const container = containerRef.current;
+      if (!container) return;
 
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    };
-
-    const handleTouchEnd = (e: TouchEvent) => {
-      if (!touchStartX || !touchStartY) return;
-
-      const touchEndX = e.changedTouches[0].clientX;
-      const touchEndY = e.changedTouches[0].clientY;
-      const deltaX = touchEndX - touchStartX;
-      const deltaY = touchEndY - touchStartY;
-
-      // Only handle horizontal swipes (ignore vertical scrolling)
-      if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-        if (deltaX > 0 && pageNum > 1) {
-          // Swipe right - previous page
-          goToPrevPage();
-        } else if (deltaX < 0 && pageNum < numPages) {
-          // Swipe left - next page
-          goToNextPage();
-        }
+      const scrollTop = container.scrollTop;
+      const pageHeight = container.scrollHeight / numPages;
+      const currentPage = Math.floor(scrollTop / pageHeight) + 1;
+      
+      if (currentPage >= 1 && currentPage <= numPages) {
+        onPageChange(currentPage);
       }
-
-      touchStartX = 0;
-      touchStartY = 0;
     };
 
-    const canvas = canvasRef.current;
-    canvas.addEventListener("touchstart", handleTouchStart, { passive: true });
-    canvas.addEventListener("touchend", handleTouchEnd, { passive: true });
-
+    containerRef.current.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
-      canvas.removeEventListener("touchstart", handleTouchStart);
-      canvas.removeEventListener("touchend", handleTouchEnd);
+      containerRef.current?.removeEventListener("scroll", handleScroll);
     };
-  }, [pageNum, numPages, goToPrevPage, goToNextPage]);
+  }, [numPages, onPageChange]);
 
   if (loading && !pdfDoc) {
     return (
@@ -393,6 +427,8 @@ export default function SecurePdfViewer({
         flexDirection: "column",
         backgroundColor: "#2d2520",
         userSelect: isAdmin ? "auto" : "none",
+        overflow: "auto",
+        position: "relative",
       }}
       onCopy={(e) => {
         if (!isAdmin) {
@@ -402,7 +438,7 @@ export default function SecurePdfViewer({
     >
       {/* Mobile-First Responsive Toolbar */}
       <div
-        className="bg-[#1a1614] border-b border-[#3d342d] flex items-center justify-between gap-2 sm:gap-4 p-2 sm:p-3"
+        className="bg-[#1a1614] border-b border-[#3d342d] flex items-center justify-between gap-2 sm:gap-4 p-2 sm:p-3 sticky top-0 z-10"
         style={{ flexShrink: 0 }}
       >
         {/* Mobile: Menu button, Desktop: Navigation */}
@@ -417,35 +453,6 @@ export default function SecurePdfViewer({
           >
             <Menu className="w-4 h-4" />
           </Button>
-
-          {/* Navigation buttons */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goToPrevPage}
-              disabled={pageNum <= 1}
-              className="text-[#f5f1eb] hover:bg-[#3d342d] disabled:opacity-50 p-2 sm:p-2"
-              aria-label="Previous page"
-            >
-              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
-            <span className="text-xs sm:text-sm text-[#a89a8e] px-1 sm:px-3 whitespace-nowrap">
-              <span className="hidden sm:inline">Page </span>
-              {pageNum}<span className="hidden sm:inline"> of {numPages}</span>
-              <span className="sm:hidden">/{numPages}</span>
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={goToNextPage}
-              disabled={pageNum >= numPages}
-              className="text-[#f5f1eb] hover:bg-[#3d342d] disabled:opacity-50 p-2 sm:p-2"
-              aria-label="Next page"
-            >
-              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
-            </Button>
-          </div>
         </div>
 
         {/* Zoom and Fullscreen - Hidden on mobile, shown in menu */}
@@ -456,7 +463,7 @@ export default function SecurePdfViewer({
               size="sm"
               onClick={zoomOut}
               className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2 flex-1 sm:flex-none"
-              title="Zoom Out"
+              title="Zoom Out (Ctrl+Scroll)"
               aria-label="Zoom Out"
             >
               <ZoomOut className="w-4 h-4" />
@@ -469,10 +476,20 @@ export default function SecurePdfViewer({
               size="sm"
               onClick={zoomIn}
               className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2 flex-1 sm:flex-none"
-              title="Zoom In"
+              title="Zoom In (Ctrl+Scroll)"
               aria-label="Zoom In"
             >
               <ZoomIn className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={resetZoom}
+              className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2"
+              title="Reset Zoom"
+              aria-label="Reset Zoom"
+            >
+              <RotateCcw className="w-4 h-4" />
             </Button>
           </div>
           <Button
@@ -488,28 +505,47 @@ export default function SecurePdfViewer({
         </div>
       </div>
 
-      {/* PDF Canvas - Mobile Optimized */}
+      {/* Scrollable PDF Pages Container */}
       <div
         className="flex-1 overflow-auto bg-[#2d2520]"
         style={{
           display: "flex",
-          justifyContent: "center",
-          alignItems: "flex-start",
-          padding: "8px",
-          WebkitOverflowScrolling: "touch", // Smooth scrolling on iOS
+          flexDirection: "column",
+          alignItems: "center",
+          padding: "16px 8px",
+          WebkitOverflowScrolling: "touch",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          className="shadow-2xl"
-          style={{
-            maxWidth: "100%",
-            height: "auto",
-            userSelect: isAdmin ? "auto" : "none",
-            touchAction: "pan-y", // Allow vertical scrolling, handle horizontal swipes
-            display: "block",
-          }}
-        />
+        {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
+          <div
+            key={pageNum}
+            data-page={pageNum}
+            className="mb-4"
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              width: "100%",
+            }}
+          >
+            <canvas
+              ref={(el) => {
+                if (el) {
+                  canvasRefs.current.set(pageNum, el);
+                } else {
+                  canvasRefs.current.delete(pageNum);
+                }
+              }}
+              className="shadow-2xl"
+              style={{
+                maxWidth: "100%",
+                height: "auto",
+                userSelect: isAdmin ? "auto" : "none",
+                touchAction: "pan-y pinch-zoom",
+                display: "block",
+              }}
+            />
+          </div>
+        ))}
       </div>
 
       {/* Security styles */}
