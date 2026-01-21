@@ -47,38 +47,19 @@ export default function BookReaderPage() {
     }
 
     const loadBook = async () => {
-      // Check if user is logged in
+      // Check if user is logged in - only check token, not user state
+      // (user state might be null initially but token exists)
       const token = localStorage.getItem("token");
       
-      // Only redirect if auth is done loading and there's no token or user
+      // Only redirect if there's no token
       if (!token) {
         toast.error("Please login to read books");
         router.push("/login");
         return;
       }
 
-      // If token exists but user is null, try to refresh user first
-      if (!user) {
-        try {
-          // Wait a bit for auth context to potentially load user
-          await new Promise(resolve => setTimeout(resolve, 500));
-          
-          // Check token again - if still no user, redirect
-          const stillNoUser = !localStorage.getItem("token");
-          if (stillNoUser) {
-            toast.error("Please login to read books");
-            router.push("/login");
-            return;
-          }
-        } catch (err) {
-          // If refresh fails, check token one more time
-          if (!localStorage.getItem("token")) {
-            toast.error("Please login to read books");
-            router.push("/login");
-            return;
-          }
-        }
-      }
+      // Token exists, proceed with loading book
+      // The API will validate the token, so we don't need to check user state here
 
       try {
         setLoading(true);
