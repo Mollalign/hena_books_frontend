@@ -78,18 +78,50 @@ export default function BookReaderPage() {
         // Create PDF URL via backend proxy (handles auth and CORS)
         const apiBaseUrl = getApiBaseUrl();
         const proxyUrl = `${apiBaseUrl}/api/v1/books/${params.id}/read/file`;
+        console.log("Fetching PDF from:", proxyUrl);
 
-        // Fetch the PDF as a blob and create an object URL
-        const response = await fetch(proxyUrl, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        // Fetch the PDF as a blob and create an object URL with timeout
+        let response;
+        try {
+          // Create an AbortController for timeout
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+
+          response = await fetch(proxyUrl, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            mode: 'cors',
+            credentials: 'omit',
+            signal: controller.signal,
+          });
+
+          clearTimeout(timeoutId);
+        } catch (fetchError: any) {
+          console.error("Network error fetching PDF:", fetchError);
+          
+          if (fetchError.name === 'AbortError') {
+            throw new Error(
+              "Request timed out. The server might be sleeping. Please wait a moment and try again."
+            );
+          }
+          
+          throw new Error(
+            `Network error: ${fetchError.message}. The backend might be waking up. Please try again in a moment.`
+          );
+        }
 
         if (!response.ok) {
           const errorText = await response.text();
           console.error("PDF fetch error:", response.status, errorText);
-          throw new Error(`Failed to fetch PDF: ${response.status}`);
+          
+          if (response.status === 401) {
+            toast.error("Session expired. Please login again.");
+            router.push("/login");
+            return;
+          }
+          
+          throw new Error(`Failed to load PDF (${response.status}): ${errorText || 'Server error'}`);
         }
 
         const arrayBuffer = await response.arrayBuffer();
