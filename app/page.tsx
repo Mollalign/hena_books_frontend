@@ -200,54 +200,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Categories Section */}
-        <section className="py-16 sm:py-24 bg-background relative">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12 sm:mb-16">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--muted)] border border-[var(--border)] mb-4">
-                <BookText className="w-4 h-4 text-[var(--primary-500)]" />
-                <span className="text-sm font-semibold text-foreground">Categories</span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-                Explore by Topic
-              </h2>
-              <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-                Find exactly what you need for your spiritual journey
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-6xl mx-auto">
-              {featuredCategories.map((cat, idx) => (
-                <Link
-                  key={cat.value}
-                  href={`/books?category=${cat.value}`}
-                  className="group relative p-6 rounded-2xl bg-card border border-[var(--border)] hover:border-[var(--primary-300)] transition-all duration-300 hover:-translate-y-2 hover:shadow-xl text-center overflow-hidden"
-                  style={{ animationDelay: `${idx * 100}ms` }}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--primary-500)]/0 to-[var(--primary-500)]/0 group-hover:from-[var(--primary-500)]/5 group-hover:to-[var(--accent-500)]/5 transition-all duration-300" />
-                  <div className="relative">
-                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:scale-110 group-hover:shadow-xl transition-all duration-300">
-                      <cat.icon className="w-7 h-7 text-white" />
-                    </div>
-                    <h3 className="font-bold text-sm mb-1">{cat.label}</h3>
-                    <p className="text-xs text-muted-foreground">{cat.description}</p>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <div className="text-center mt-10">
-              <Link
-                href="/books"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[var(--muted)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] border border-[var(--border)] hover:border-[var(--primary-300)] font-semibold transition-all"
-              >
-                View All Books
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          </div>
-        </section>
-
+        {/* Featured Books */}
         <FeaturedBooks />
 
         {/* Features Section */}
