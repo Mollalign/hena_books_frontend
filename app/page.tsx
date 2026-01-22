@@ -79,7 +79,7 @@ export default function Home() {
     },
     {
       icon: Heart,
-      title: "ለዘላለም ነፃ",
+      title: "Free ",
       description: "ምንም የተደበቀ ክፍያ ወይም የደንበኝነት ምዝገባ አያስፈልግም",
       stat: "100%",
       statLabel: "ነፃ"
@@ -119,7 +119,7 @@ export default function Home() {
               </h1>
 
               <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-8 leading-relaxed">
-                መንፈሳዊ ሕይወትዎን የሚያሳድጉ የመጽሐፍ ቅዱስ ትምህርቶችን፣ የጸሎት መመሪያዎችንና መጻሕፍትን እዚህ ያገኛሉ።
+                መንፈሳዊ ሕይወትዎን የሚያሳድጉ የመጽሐፍ ቅዱስ ትምህርቶችን፣ የተለያዩ መንፈሰዊ መፅሐፍቶችን እዚህ ያገኛሉ።
               </p>
 
               {/* CTA Buttons */}
