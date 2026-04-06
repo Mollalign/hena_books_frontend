@@ -9,11 +9,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-background via-background to-muted/30">
+    <div className="min-h-dvh bg-background">
       <Navbar />
       <div className="flex pt-16">
         <AdminSidebar />
-        <main className="flex-1 lg:ml-72 w-full min-w-0 p-4 sm:p-6 lg:p-8 pt-24 lg:pt-6">
+        <main className="flex-1 lg:ml-60 w-full min-w-0 px-4 sm:px-6 lg:px-8 py-6 pt-20 lg:pt-6">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

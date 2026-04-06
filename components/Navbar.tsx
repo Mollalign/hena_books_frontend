@@ -68,8 +68,8 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 overflow-x-hidden ${isScrolled || isMobileMenuOpen
-          ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-border"
-          : "bg-transparent"
+        ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-border"
+        : "bg-transparent"
         }`}
     >
       <div className="container mx-auto px-4 max-w-full overflow-hidden">
@@ -107,9 +107,10 @@ export default function Navbar() {
               <>
                 <button
                   onClick={toggleLanguage}
-                  className="p-2 w-10 text-xs font-bold rounded-full bg-muted/50 hover:bg-muted border border-border text-foreground transition-all uppercase"
+                  className="px-3 py-2 flex items-center gap-1.5 text-xs font-bold rounded-full bg-muted/50 hover:bg-muted border border-border text-foreground transition-all uppercase"
                 >
-                  {language === "am" ? "EN" : "AM"}
+                  <span className="text-sm leading-none">{language === "am" ? "🇺🇸" : "🇪🇹"}</span>
+                  <span>{language === "am" ? "EN" : "AM"}</span>
                 </button>
                 <button
                   onClick={() => setTheme(isDark ? "light" : "dark")}
@@ -146,13 +147,13 @@ export default function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link href="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" /> መገለጫ
+                      <User className="mr-2 h-4 w-4" /> {language === "am" ? "መገለጫ" : "Profile"}
                     </Link>
                   </DropdownMenuItem>
                   {user.role === "admin" && (
                     <DropdownMenuItem asChild className="cursor-pointer">
                       <Link href="/admin/dashboard" className="flex items-center">
-                        <LayoutDashboard className="mr-2 h-4 w-4" /> ዳሽቦርድ
+                        <LayoutDashboard className="mr-2 h-4 w-4" /> {language === "am" ? "ዳሽቦርድ" : "Dashboard"}
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -161,7 +162,7 @@ export default function Navbar() {
                     onClick={logout}
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> ውጣ
+                    <LogOut className="mr-2 h-4 w-4" /> {language === "am" ? "ውጣ" : "Logout"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -171,14 +172,14 @@ export default function Navbar() {
                   href="/login"
                   className="px-4 py-2.5 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  ግባ
+                  {language === "am" ? "ግባ" : "Login"}
                 </Link>
                 <Link
                   href="/register"
                   className="px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-navy-gradient"
                 >
                   <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" /> ተመዝገብ
+                    <Sparkles className="w-4 h-4" /> {language === "am" ? "ተመዝገብ" : "Register"}
                   </span>
                 </Link>
               </div>
@@ -191,9 +192,10 @@ export default function Navbar() {
               <>
                 <button
                   onClick={toggleLanguage}
-                  className="p-2 w-10 text-xs font-bold rounded-full bg-muted/50 border border-border text-foreground uppercase"
+                  className="px-3 py-2 flex items-center gap-1.5 text-xs font-bold rounded-full bg-muted/50 border border-border text-foreground uppercase"
                 >
-                  {language === "am" ? "EN" : "AM"}
+                  <span className="text-sm leading-none">{language === "am" ? "🇺🇸" : "🇪🇹"}</span>
+                  <span>{language === "am" ? "EN" : "AM"}</span>
                 </button>
                 <button
                   onClick={() => setTheme(isDark ? "light" : "dark")}
@@ -260,7 +262,7 @@ export default function Navbar() {
                   onClick={close}
                 >
                   <span className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-navy-500" /> መገለጫ
+                    <User className="w-5 h-5 text-navy-500" /> {language === "am" ? "መገለጫ" : "Profile"}
                   </span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </Link>
@@ -272,7 +274,7 @@ export default function Navbar() {
                     onClick={close}
                   >
                     <span className="flex items-center gap-3">
-                      <LayoutDashboard className="w-5 h-5 text-gold-500" /> ዳሽቦርድ
+                      <LayoutDashboard className="w-5 h-5 text-gold-500" /> {language === "am" ? "ዳሽቦርድ" : "Dashboard"}
                     </span>
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </Link>
@@ -282,7 +284,7 @@ export default function Navbar() {
                   onClick={() => { logout(); close(); }}
                   className="flex items-center gap-3 w-[calc(100%-1rem)] mx-2 px-4 py-3.5 rounded-xl text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all active:scale-[0.98] text-left"
                 >
-                  <LogOut className="w-5 h-5" /> ውጣ
+                  <LogOut className="w-5 h-5" /> {language === "am" ? "ውጣ" : "Logout"}
                 </button>
               </>
             ) : (
@@ -292,14 +294,14 @@ export default function Navbar() {
                   className="flex items-center justify-center px-4 py-3.5 rounded-xl text-base font-semibold bg-muted hover:bg-muted/80 transition-all active:scale-[0.98]"
                   onClick={close}
                 >
-                  ግባ
+                  {language === "am" ? "ግባ" : "Login"}
                 </Link>
                 <Link
                   href="/register"
                   className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-base font-semibold text-white bg-navy-gradient shadow-lg transition-all active:scale-[0.98]"
                   onClick={close}
                 >
-                  <Sparkles className="w-4 h-4" /> ተመዝገብ
+                  <Sparkles className="w-4 h-4" /> {language === "am" ? "ተመዝገብ" : "Register"}
                 </Link>
               </div>
             )}
