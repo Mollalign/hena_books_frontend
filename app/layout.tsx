@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { QueryProvider } from "@/context/QueryProvider";
+import { LanguageProvider } from "@/context/LanguageContext";
 import "./globals.css";
 
 const geistMono = Geist_Mono({
@@ -61,8 +62,10 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <QueryProvider>
             <AuthProvider>
-              {children}
-              <Toaster position="top-center" richColors />
+              <LanguageProvider>
+                {children}
+                <Toaster position="top-center" richColors />
+              </LanguageProvider>
             </AuthProvider>
           </QueryProvider>
         </ThemeProvider>

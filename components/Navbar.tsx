@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,19 +28,22 @@ import {
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-const navLinks = [
-  { href: "/", label: "መነሻ" },
-  { href: "/books", label: "መጽሐፍት" },
-  { href: "#about", label: "ስለ እኛ" },
-  { href: "#contact", label: "ግንኙነት" },
+const getNavLinks = (language: string) => [
+  { href: "/", label: language === "am" ? "መነሻ" : "Home" },
+  { href: "/books", label: language === "am" ? "መጽሐፍት" : "Books" },
+  { href: "#about", label: language === "am" ? "ስለ እኛ" : "About" },
+  { href: "#contact", label: language === "am" ? "ግንኙነት" : "Contact" },
 ];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const { resolvedTheme, setTheme } = useTheme();
+  const { language, toggleLanguage } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+
+  const navLinks = getNavLinks(language);
 
   useEffect(() => setMounted(true), []);
 
@@ -63,11 +67,10 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 overflow-x-hidden ${
-        isScrolled || isMobileMenuOpen
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 overflow-x-hidden ${isScrolled || isMobileMenuOpen
           ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-border"
           : "bg-transparent"
-      }`}
+        }`}
     >
       <div className="container mx-auto px-4 max-w-full overflow-hidden">
         <div className="flex items-center justify-between h-16">
@@ -101,13 +104,21 @@ export default function Navbar() {
           {/* Desktop Actions */}
           <div className="hidden md:flex items-center gap-2">
             {mounted && (
-              <button
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-                className="p-2.5 rounded-full bg-muted/50 hover:bg-muted border border-border text-muted-foreground hover:text-foreground transition-all"
-                aria-label="Toggle theme"
-              >
-                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
+              <>
+                <button
+                  onClick={toggleLanguage}
+                  className="p-2 w-10 text-xs font-bold rounded-full bg-muted/50 hover:bg-muted border border-border text-foreground transition-all uppercase"
+                >
+                  {language === "am" ? "EN" : "AM"}
+                </button>
+                <button
+                  onClick={() => setTheme(isDark ? "light" : "dark")}
+                  className="p-2.5 rounded-full bg-muted/50 hover:bg-muted border border-border text-muted-foreground hover:text-foreground transition-all"
+                  aria-label="Toggle theme"
+                >
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              </>
             )}
 
             {user ? (
@@ -177,13 +188,21 @@ export default function Navbar() {
           {/* Mobile Actions */}
           <div className="flex md:hidden items-center gap-2">
             {mounted && (
-              <button
-                onClick={() => setTheme(isDark ? "light" : "dark")}
-                className="p-2 rounded-full bg-muted/50 border border-border text-muted-foreground"
-                aria-label="Toggle theme"
-              >
-                {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
+              <>
+                <button
+                  onClick={toggleLanguage}
+                  className="p-2 w-10 text-xs font-bold rounded-full bg-muted/50 border border-border text-foreground uppercase"
+                >
+                  {language === "am" ? "EN" : "AM"}
+                </button>
+                <button
+                  onClick={() => setTheme(isDark ? "light" : "dark")}
+                  className="p-2 rounded-full bg-muted/50 border border-border text-muted-foreground"
+                  aria-label="Toggle theme"
+                >
+                  {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              </>
             )}
             <button
               className="p-2 rounded-full bg-muted/50 border border-border text-foreground"
@@ -201,9 +220,8 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ${
-            isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
-          }`}
+          className={`md:hidden overflow-hidden transition-all duration-300 ${isMobileMenuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0"
+            }`}
         >
           <div className="py-3 space-y-1 border-t border-border">
             {navLinks.map((link) => (

@@ -7,8 +7,10 @@ import { booksService, Book } from "@/lib/services/books";
 import BookCard from "@/components/books/BookCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function BooksPage() {
+  const { language } = useLanguage();
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,7 +18,7 @@ export default function BooksPage() {
     booksService
       .getBooks({ page: 1, per_page: 50 })
       .then((res) => setBooks(res.books))
-      .catch(() => toast.error("መጽሐፍትን መጫን አልተቻለም ።"))
+      .catch(() => toast.error(language === "am" ? "መጽሐፍትን መጫን አልተቻለም ።" : "Failed to load books."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -29,13 +31,13 @@ export default function BooksPage() {
             className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-navy-50 dark:hover:bg-navy-950 transition-all group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            መነሻ
+            {language === "am" ? "መነሻ" : "Home"}
           </Link>
         </div>
 
         <div className="text-center mb-8 sm:mb-12">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-            መጽሐፉን እዚህ ያገኙታል
+            {language === "am" ? "መጽሐፉን እዚህ ያገኙታል" : "You will find the book here"}
           </h1>
         </div>
 
@@ -62,8 +64,8 @@ export default function BooksPage() {
             <div className="w-16 h-16 mx-auto bg-navy-gradient rounded-2xl flex items-center justify-center shadow-lg mb-5">
               <BookOpen className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold mb-2">መጽሐፉ አልተገኘም</h3>
-            <p className="text-muted-foreground">በቅርብ ይመለሱ</p>
+            <h3 className="text-xl font-bold mb-2">{language === "am" ? "መጽሐፉ አልተገኘም" : "No books found"}</h3>
+            <p className="text-muted-foreground">{language === "am" ? "በቅርብ ይመለሱ" : "Check back soon"}</p>
           </div>
         )}
       </div>

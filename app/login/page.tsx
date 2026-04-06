@@ -87,7 +87,7 @@ export default function LoginPage() {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="henoktesfaye@gmail.com"
                         className="h-12 text-base"
                         autoComplete="email"
                         {...field}

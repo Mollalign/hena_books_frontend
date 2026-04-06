@@ -1,4 +1,5 @@
 import { Quote } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const DAILY_VERSES = [
   { text: "ሕግህ ለእግሬ መብራት፥ ለመንገዴም ብርሃን ነው።", reference: "መዝሙር 119:105" },
@@ -19,6 +20,7 @@ function getDailyVerse() {
 
 export default function DailyVerse() {
   const verse = getDailyVerse();
+  const { language } = useLanguage();
 
   return (
     <section className="py-12 sm:py-16 relative overflow-hidden">
@@ -33,7 +35,7 @@ export default function DailyVerse() {
               </div>
               <div className="text-center sm:text-left flex-1">
                 <p className="text-xs font-medium text-white/60 uppercase tracking-wider mb-2">
-                  የዛሬ ቅዱስ ቃል
+                  {language === "am" ? "የዛሬ ቅዱስ ቃል" : "Daily Verse"}
                 </p>
                 <blockquote className="text-lg sm:text-xl md:text-2xl text-white font-medium leading-relaxed mb-3 italic">
                   &ldquo;{verse.text}&rdquo;

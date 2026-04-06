@@ -99,7 +99,7 @@ export default function RegisterPage() {
                       <User className="w-4 h-4" /> Full Name
                     </FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" className="h-12 text-base" autoComplete="name" {...field} />
+                      <Input placeholder="henok tesfaye" className="h-12 text-base" autoComplete="name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -114,7 +114,7 @@ export default function RegisterPage() {
                       <Mail className="w-4 h-4" /> Email
                     </FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="you@example.com" className="h-12 text-base" autoComplete="email" {...field} />
+                      <Input type="email" placeholder="henoktesfaye@gmail.com" className="h-12 text-base" autoComplete="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

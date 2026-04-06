@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Mail, Phone, Send } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const contacts = [
   {
@@ -23,11 +24,15 @@ const contacts = [
 ];
 
 export default function AboutSection() {
+  const { language } = useLanguage();
+
   return (
-    <section className="py-10 sm:py-16 bg-muted/30">
+    <section className="py-10 sm:py-16 bg-muted/30" id="about">
       <div className="container mx-auto px-4">
         <div className="max-w-lg mx-auto text-center">
-          <h2 className="text-xl sm:text-2xl font-bold mb-6">ስለ ጸሐፊው</h2>
+          <h2 className="text-xl sm:text-2xl font-bold mb-6">
+            {language === "am" ? "ስለ ጸሐፊው" : "About the Author"}
+          </h2>
 
           <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-3 border-navy-300 dark:border-navy-700 shadow-xl mx-auto mb-4">
             <Image
@@ -39,11 +44,23 @@ export default function AboutSection() {
             />
           </div>
 
-          <h3 className="text-lg font-bold mb-1">ሄኖክ ተስፋዬ ደቸሬ</h3>
+          <h3 className="text-lg font-bold mb-1">
+            {language === "am" ? "ሄኖክ ተስፋዬ ደቸሬ" : "Henok Tesfaye Dechere"}
+          </h3>
           <div className="space-y-1 text-sm text-foreground/60 mb-5">
-            <p>በዲላ አማኑኤል ሕብረት ቤተክርስቲያን የወንጌል ሥርጭት አገልጋይ ።</p>
-            <p>በአሁኑ ጊዜ የሐዋሳ ዩኒቨርስቲ ተማሪ ነው ።</p>
-            <p>በሐዋሳ ዩኒቨርስቲ( HU-Fello ) Evang team ያገለግላል ።</p>
+            {language === "am" ? (
+              <>
+                <p>በዲላ አማኑኤል ሕብረት ቤተክርስቲያን የወንጌል ሥርጭት አገልጋይ ።</p>
+                <p>በአሁኑ ጊዜ የሐዋሳ ዩኒቨርስቲ ተማሪ ነው ።</p>
+                <p>በሐዋሳ ዩኒቨርስቲ( HU-Fello ) Evang team ያገለግላል ።</p>
+              </>
+            ) : (
+              <>
+                <p>Evangelism Minister at Dilla Emmanuel Fellowship Church.</p>
+                <p>Currently a student at Hawassa University.</p>
+                <p>Serves in the HU-Fello Evang team at Hawassa University.</p>
+              </>
+            )}
           </div>
 
           <div className="space-y-2">

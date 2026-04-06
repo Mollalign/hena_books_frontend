@@ -1,43 +1,55 @@
 import { BookOpen, Globe, Heart, CheckCircle2 } from "lucide-react";
+import { useLanguage } from "@/context/LanguageContext";
 
 const features = [
   {
     icon: BookOpen,
-    title: "መጽሐፍ ቅዱስ ተኮር",
-    description: "ሁሉም ይዘቶች ከመጽሐፍ ቅዱስ ትምህርት ጋር የተጣጣሙ ናቸው ።",
+    titleAm: "መጽሐፍ ቅዱስ ተኮር",
+    titleEn: "Bible Centered",
+    descriptionAm: "ሁሉም ይዘቶች ከመጽሐፍ ቅዱስ ትምህርት ጋር የተጣጣሙ ናቸው ።",
+    descriptionEn: "All content is aligned with biblical teachings.",
     stat: "100%",
-    statLabel: "ታማኝ",
+    statLabelAm: "ታማኝ",
+    statLabelEn: "Faithful",
   },
   {
     icon: Globe,
-    title: "በየትኛውም ቦታ ያንብቡ",
-    description: "በማንኛውም መሣሪያ፣ በማንኛውም ጊዜ ያግኙ ።",
+    titleAm: "በየትኛውም ቦታ ያንብቡ",
+    titleEn: "Read Anywhere",
+    descriptionAm: "በማንኛውም መሣሪያ፣ በማንኛውም ጊዜ ያግኙ ።",
+    descriptionEn: "Access on any device, anytime.",
     stat: "24/7",
-    statLabel: "ተደራሽ",
+    statLabelAm: "ተደራሽ",
+    statLabelEn: "Accessible",
   },
   {
     icon: Heart,
-    title: "100% ነጻ",
-    description: "ምንም ዓይነት ክፍያ አያስፈልግም ። የእግዚአብሔርን በጎነት ማወቅ ለሁሉም ነው ።",
+    titleAm: "100% ነጻ",
+    titleEn: "100% Free",
+    descriptionAm: "ምንም ዓይነት ክፍያ አያስፈልግም ። የእግዚአብሔርን በጎነት ማወቅ ለሁሉም ነው ።",
+    descriptionEn: "No payment required. Knowing God's goodness is for everyone.",
     stat: "100%",
-    statLabel: "ነጻ",
+    statLabelAm: "ነጻ",
+    statLabelEn: "Free",
   },
 ];
 
 export default function FeaturesGrid() {
+  const { language } = useLanguage();
+
   return (
     <section className="py-12 sm:py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border mb-3">
             <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-semibold">HenaBooks ለምን?</span>
+            <span className="text-sm font-semibold">{language === "am" ? "HenaBooks ለምን?" : "Why HenaBooks?"}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-            ለሁሉም የተገነባ ነው ።
+            {language === "am" ? "ለሁሉም የተገነባ ነው ።" : "Built for Everyone."}
           </h2>
           <p className="text-foreground/60 max-w-lg mx-auto">
-            የእግዚአብሔርን በጎነት እንድናውቅ ይገባናል ።
+            {language === "am" ? "የእግዚአብሔርን በጎነት እንድናውቅ ይገባናል ።" : "We deserve to know the goodness of God."}
           </p>
         </div>
 
@@ -53,12 +65,12 @@ export default function FeaturesGrid() {
                 </div>
                 <div className="text-right">
                   <div className="text-xl font-bold text-navy-500">{f.stat}</div>
-                  <div className="text-xs text-muted-foreground">{f.statLabel}</div>
+                  <div className="text-xs text-muted-foreground">{language === "am" ? f.statLabelAm : f.statLabelEn}</div>
                 </div>
               </div>
-              <h3 className="font-bold text-base mb-1.5">{f.title}</h3>
+              <h3 className="font-bold text-base mb-1.5">{language === "am" ? f.titleAm : f.titleEn}</h3>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                {f.description}
+                {language === "am" ? f.descriptionAm : f.descriptionEn}
               </p>
             </div>
           ))}
