@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import HeroSection from "@/components/home/HeroSection";
+import BookSpotlight from "@/components/home/BookSpotlight";
 import DailyVerse from "@/components/home/DailyVerse";
 import MissionSection from "@/components/home/MissionSection";
 import AboutSection from "@/components/home/AboutSection";
@@ -30,6 +31,7 @@ export default function HomePage() {
   return (
     <>
       <HeroSection stats={stats} />
+      <BookSpotlight />
       <DailyVerse />
       <MissionSection />
       <div id="about">

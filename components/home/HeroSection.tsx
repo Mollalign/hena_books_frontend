@@ -17,7 +17,7 @@ export default function HeroSection({ stats }: Props) {
   useEffect(() => setVisible(true), []);
 
   return (
-    <section className="relative flex items-center min-h-[90dvh] py-8 overflow-hidden">
+    <section className="relative flex items-center min-h-[70dvh] py-8 overflow-hidden">
       <div className="absolute inset-0 z-0">
         <div className="absolute top-20 right-10 w-72 md:w-[500px] h-72 md:h-[500px] bg-gradient-to-br from-navy-500/20 to-transparent rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 left-10 w-56 md:w-96 h-56 md:h-96 bg-gradient-to-tr from-gold-500/15 to-transparent rounded-full blur-3xl animate-pulse [animation-delay:1s]" />

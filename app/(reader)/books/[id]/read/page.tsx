@@ -26,6 +26,7 @@ export default function BookReaderPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [currentScale, setCurrentScale] = useState(100);
+  const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const pdfViewerRef = useRef<PdfViewerHandle>(null);
@@ -79,6 +80,14 @@ export default function BookReaderPage() {
         const arrayBuffer = await response.arrayBuffer();
         const blob = new Blob([arrayBuffer], { type: "application/pdf" });
         setPdfUrl(URL.createObjectURL(blob));
+
+        try {
+          const progressRes = await fetch(`/api/v1/books/${params.id}/read/progress`, { credentials: "include" });
+          if (progressRes.ok) {
+            const { last_page_read } = await progressRes.json();
+            if (last_page_read > 1) setInitialPage(last_page_read);
+          }
+        } catch {}
 
         try {
           const session = await analyticsService.startSession({ book_id: params.id as string });
@@ -278,6 +287,7 @@ export default function BookReaderPage() {
               pdfUrl={pdfUrl}
               title={bookData.title}
               isAdmin={isAdmin}
+              initialPage={initialPage}
               onPageChange={setCurrentPage}
               onScaleChange={handleScaleChange}
               onLoadComplete={setTotalPages}

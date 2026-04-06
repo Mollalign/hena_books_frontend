@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -35,6 +36,8 @@ const loginSchema = z.object({
 
 export default function LoginPage() {
   const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("from") || undefined;
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -45,7 +48,7 @@ export default function LoginPage() {
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
     try {
-      await login(values.email, values.password);
+      await login(values.email, values.password, redirectTo);
     } catch (error: any) {
       toast.error(
         error.response?.data?.detail ||
@@ -146,7 +149,7 @@ export default function LoginPage() {
         <CardFooter className="flex flex-col gap-3 pt-2">
           <p className="text-sm text-center text-muted-foreground">
             Don&apos;t have an account?{" "}
-            <Link href="/register" className="text-navy-500 hover:underline font-semibold">
+            <Link href={redirectTo ? `/register?from=${encodeURIComponent(redirectTo)}` : "/register"} className="text-navy-500 hover:underline font-semibold">
               Create one
             </Link>
           </p>

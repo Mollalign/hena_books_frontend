@@ -34,7 +34,7 @@ export default function BookDetailPage() {
   const handleReadNow = () => {
     if (!user) {
       toast.info("Please login to read books");
-      router.push("/login");
+      router.push(`/login?from=${encodeURIComponent(`/books/${params.id}/read`)}`);
       return;
     }
     router.push(`/books/${params.id}/read`);
@@ -161,7 +161,7 @@ export default function BookDetailPage() {
 
               {!user && (
                 <p className="text-sm text-center text-muted-foreground">
-                  <Link href="/register" className="text-navy-500 hover:underline font-medium">
+                  <Link href={`/register?from=${encodeURIComponent(`/books/${params.id}/read`)}`} className="text-navy-500 hover:underline font-medium">
                     Create an account
                   </Link>{" "}
                   to start reading

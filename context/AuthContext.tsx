@@ -22,7 +22,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -47,11 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshUser().finally(() => setLoading(false));
   }, [refreshUser]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, redirectTo?: string) => {
     const { data } = await api.post("/auth/login", { email, password });
     setUser(data.user);
     toast.success("Successfully logged in!");
-    router.push("/");
+    router.push(redirectTo || "/");
   };
 
   const logout = async () => {

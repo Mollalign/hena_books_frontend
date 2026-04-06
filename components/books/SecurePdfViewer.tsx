@@ -7,19 +7,21 @@ export interface PdfViewerHandle {
   zoomOut: () => void;
   resetZoom: () => void;
   getScale: () => number;
+  scrollToPage: (page: number) => void;
 }
 
 interface SecurePdfViewerProps {
   pdfUrl: string;
   title: string;
   isAdmin?: boolean;
+  initialPage?: number;
   onPageChange?: (page: number) => void;
   onScaleChange?: (scale: number) => void;
   onLoadComplete?: (numPages: number) => void;
 }
 
 const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
-  function SecurePdfViewer({ pdfUrl, title, isAdmin = false, onPageChange, onScaleChange, onLoadComplete }, ref) {
+  function SecurePdfViewer({ pdfUrl, title, isAdmin = false, initialPage, onPageChange, onScaleChange, onLoadComplete }, ref) {
     const [isMounted, setIsMounted] = useState(false);
     const [pdfDoc, setPdfDoc] = useState<any>(null);
     const [numPages, setNumPages] = useState(0);
@@ -57,12 +59,22 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       return 1.5;
     }, []);
 
+    const scrollToPage = useCallback((page: number) => {
+      const el = scrollContainerRef.current;
+      if (!el || numPages === 0 || page < 1 || page > numPages) return;
+      const pageElement = el.querySelector(`[data-page="${page}"]`);
+      if (pageElement) {
+        pageElement.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    }, [numPages]);
+
     useImperativeHandle(ref, () => ({
       zoomIn: () => setScale((prev) => Math.min(prev + 0.25, 3)),
       zoomOut: () => setScale((prev) => Math.max(prev - 0.25, 0.5)),
       resetZoom: () => setScale(calculateInitialScale()),
       getScale: () => scaleRef.current,
-    }), [calculateInitialScale]);
+      scrollToPage,
+    }), [calculateInitialScale, scrollToPage]);
 
     // Load PDF.js library
     useEffect(() => {
@@ -216,6 +228,17 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
         renderPage(i, currentScale);
       }
     }, [pdfDoc, numPages, scale, renderPage]);
+
+    // Scroll to initial page after first render completes
+    const hasScrolledToInitial = useRef(false);
+    useEffect(() => {
+      if (!pdfDoc || numPages === 0 || !initialPage || initialPage <= 1 || hasScrolledToInitial.current) return;
+      const timer = setTimeout(() => {
+        scrollToPage(initialPage);
+        hasScrolledToInitial.current = true;
+      }, 300);
+      return () => clearTimeout(timer);
+    }, [pdfDoc, numPages, initialPage, scrollToPage]);
 
     // IntersectionObserver for lazy loading off-screen pages
     useEffect(() => {

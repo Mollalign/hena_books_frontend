@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -28,6 +28,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/context/AuthContext";
 
 const registerSchema = z
   .object({
@@ -42,7 +43,9 @@ const registerSchema = z
   });
 
 export default function RegisterPage() {
-  const router = useRouter();
+  const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("from") || undefined;
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -58,8 +61,7 @@ export default function RegisterPage() {
         password: values.password,
         name: values.name,
       });
-      toast.success("Account created successfully! Please sign in.");
-      router.push("/login");
+      await login(values.email, values.password, redirectTo);
     } catch (error: any) {
       toast.error(
         error.response?.data?.detail ||
@@ -171,7 +173,7 @@ export default function RegisterPage() {
         <CardFooter className="flex flex-col gap-3 pt-2">
           <p className="text-sm text-center text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="text-navy-500 hover:underline font-semibold">
+            <Link href={redirectTo ? `/login?from=${encodeURIComponent(redirectTo)}` : "/login"} className="text-navy-500 hover:underline font-semibold">
               Sign in
             </Link>
           </p>
