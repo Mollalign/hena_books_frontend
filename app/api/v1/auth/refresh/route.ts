@@ -1,25 +1,37 @@
 import { NextRequest } from "next/server";
-import { decodeToken, createTokens } from "@/lib/auth";
-import { RefreshTokenSchema } from "@/lib/validations/auth";
+import { decodeToken, createTokens, setAuthCookies } from "@/lib/auth";
 import { jsonResponse, errorResponse, handleApiError } from "@/lib/api-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const data = RefreshTokenSchema.parse(body);
+    const cookieHeader = request.headers.get("cookie") || "";
+    const match = cookieHeader.match(/(?:^|;\s*)refresh_token=([^;]*)/);
+    const refreshTokenValue = match ? match[1] : null;
 
-    const payload = await decodeToken(data.refresh_token);
+    if (!refreshTokenValue) {
+      const body = await request.json().catch(() => null);
+      if (!body?.refresh_token) {
+        return errorResponse("No refresh token provided", 401);
+      }
+      const payload = await decodeToken(body.refresh_token);
+      if (!payload || payload.type !== "refresh") {
+        return errorResponse("Invalid refresh token", 401);
+      }
+      const { accessToken, refreshToken } = await createTokens(payload.sub);
+      const response = jsonResponse({ token_type: "bearer" });
+      setAuthCookies(response, accessToken, refreshToken);
+      return response;
+    }
+
+    const payload = await decodeToken(refreshTokenValue);
     if (!payload || payload.type !== "refresh") {
       return errorResponse("Invalid refresh token", 401);
     }
 
     const { accessToken, refreshToken } = await createTokens(payload.sub);
-
-    return jsonResponse({
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      token_type: "bearer",
-    });
+    const response = jsonResponse({ token_type: "bearer" });
+    setAuthCookies(response, accessToken, refreshToken);
+    return response;
   } catch (error) {
     return handleApiError(error);
   }

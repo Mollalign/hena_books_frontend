@@ -19,9 +19,27 @@ export async function GET(
       return errorResponse("Book not found", 404);
     }
 
-    const response = await fetch(book.file_url);
+    console.log("[pdf-proxy] Fetching:", book.file_url);
+
+    let response: Response;
+    try {
+      response = await fetch(book.file_url, {
+        signal: AbortSignal.timeout(30000),
+      });
+    } catch (fetchErr) {
+      console.error("[pdf-proxy] Fetch error:", fetchErr);
+      return errorResponse(
+        `Failed to connect to file server: ${fetchErr instanceof Error ? fetchErr.message : "unknown error"}`,
+        502
+      );
+    }
+
     if (!response.ok) {
-      return errorResponse("Failed to fetch PDF", 502);
+      console.error("[pdf-proxy] HTTP error:", response.status, response.statusText);
+      return errorResponse(
+        `File server returned ${response.status}: ${response.statusText}`,
+        502
+      );
     }
 
     const safeFilename = encodeURIComponent(`${book.title}.pdf`);

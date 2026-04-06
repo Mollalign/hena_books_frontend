@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
       orderBy: { created_at: "desc" },
     });
 
-    return jsonResponse(users);
+    const mapped = users.map((u) => ({ ...u, role: u.role.toLowerCase() }));
+    return jsonResponse(mapped);
   } catch (error) {
     return handleApiError(error);
   }

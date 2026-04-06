@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       id: updatedUser.id,
       email: updatedUser.email,
       name: updatedUser.name,
-      role: updatedUser.role,
+      role: updatedUser.role.toLowerCase(),
       is_active: updatedUser.is_active,
       created_at: updatedUser.created_at,
     });

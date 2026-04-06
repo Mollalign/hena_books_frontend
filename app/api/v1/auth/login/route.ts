@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
-import { verifyPassword, createTokens } from "@/lib/auth";
+import { verifyPassword, createTokens, setAuthCookies } from "@/lib/auth";
 import { LoginSchema } from "@/lib/validations/auth";
 import { jsonResponse, errorResponse, handleApiError } from "@/lib/api-utils";
 
@@ -24,11 +24,18 @@ export async function POST(request: NextRequest) {
 
     const { accessToken, refreshToken } = await createTokens(user.id);
 
-    return jsonResponse({
-      access_token: accessToken,
-      refresh_token: refreshToken,
+    const response = jsonResponse({
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role.toLowerCase(),
+      },
       token_type: "bearer",
     });
+
+    setAuthCookies(response, accessToken, refreshToken);
+    return response;
   } catch (error) {
     return handleApiError(error);
   }

@@ -12,36 +12,29 @@ export default function FeaturedBooks() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchFeatured = async () => {
-      try {
-        const data = await booksService.getFeaturedBooks(6);
-        setBooks(data);
-      } catch (error) {
-        console.error("Failed to fetch featured books:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchFeatured();
+    booksService
+      .getFeaturedBooks(6)
+      .then(setBooks)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) {
     return (
-      <section className="py-16 sm:py-24 bg-[var(--muted)]/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <Skeleton className="h-8 w-48 mx-auto mb-4" />
-            <Skeleton className="h-12 w-80 mx-auto mb-4" />
-            <Skeleton className="h-6 w-96 mx-auto" />
+      <section className="py-12 sm:py-20 bg-muted/20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <Skeleton className="h-6 w-32 mx-auto mb-3" />
+            <Skeleton className="h-10 w-56 mx-auto mb-3" />
+            <Skeleton className="h-5 w-72 mx-auto" />
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 max-w-6xl mx-auto">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="rounded-2xl overflow-hidden border border-[var(--border)] bg-background">
+              <div key={i} className="rounded-2xl overflow-hidden border border-border bg-background">
                 <Skeleton className="aspect-[3/4] w-full" />
-                <div className="p-6 space-y-3">
-                  <Skeleton className="h-6 w-3/4" />
+                <div className="p-3 sm:p-5 space-y-2">
+                  <Skeleton className="h-5 w-3/4" />
                   <Skeleton className="h-4 w-1/2" />
-                  <Skeleton className="h-4 w-full" />
                 </div>
               </div>
             ))}
@@ -53,73 +46,50 @@ export default function FeaturedBooks() {
 
   if (books.length === 0) {
     return (
-      <section className="py-16 sm:py-24 bg-[var(--muted)]/20">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="max-w-md mx-auto text-center">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] flex items-center justify-center mx-auto mb-6 shadow-lg">
-              <BookOpen className="w-10 h-10 text-white" />
-            </div>
-            <h3 className="text-2xl font-bold mb-3">No Featured Books Yet</h3>
-            <p className="text-muted-foreground mb-6">
-              Check back soon for our handpicked recommendations
-            </p>
-            <Link
-              href="/books"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--primary-500)] text-white font-semibold hover:bg-[var(--primary-600)] transition-all"
-            >
-              Browse All Books
-              <ArrowRight className="w-5 h-5" />
-            </Link>
+      <section className="py-12 sm:py-20 bg-muted/20">
+        <div className="container mx-auto px-4 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-navy-gradient flex items-center justify-center mx-auto mb-5 shadow-lg">
+            <BookOpen className="w-8 h-8 text-white" />
           </div>
+          <h3 className="text-xl font-bold mb-2">No Featured Books Yet</h3>
+          <p className="text-muted-foreground mb-5">Check back soon for our handpicked recommendations</p>
+          <Link href="/books" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-navy-500 text-white font-semibold">
+            Browse All Books <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="py-16 sm:py-24 bg-gradient-to-b from-[var(--muted)]/30 to-background relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-[var(--primary-500)]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-[var(--accent-500)]/5 rounded-full blur-3xl" />
-      
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        {/* Section Header */}
-        <div className="text-center mb-12 sm:mb-16 max-w-3xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-[var(--accent-100)] to-[var(--accent-200)] dark:from-[var(--accent-900)]/50 dark:to-[var(--accent-800)]/50 border border-[var(--accent-300)] dark:border-[var(--accent-700)] mb-6">
-            <Sparkles className="w-4 h-4 text-[var(--accent-600)] dark:text-[var(--accent-400)]" />
-            <span className="text-sm font-semibold text-[var(--accent-700)] dark:text-[var(--accent-300)]">
-              Editor's Picks
-            </span>
+    <section className="py-12 sm:py-20 bg-gradient-to-b from-muted/30 to-background relative overflow-hidden">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="text-center mb-10 max-w-2xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/50 dark:to-gold-800/50 border border-gold-300 dark:border-gold-700 mb-4">
+            <Sparkles className="w-3.5 h-3.5 text-gold-600 dark:text-gold-400" />
+            <span className="text-xs font-semibold text-gold-700 dark:text-gold-300">Editor&apos;s Picks</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4">
-            Featured Resources
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Handpicked biblical resources to strengthen your faith and deepen your understanding of God's Word
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">Featured Resources</h2>
+          <p className="text-muted-foreground max-w-lg mx-auto text-sm sm:text-base">
+            Handpicked biblical resources to strengthen your faith
           </p>
         </div>
 
-        {/* Books Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto mb-12">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 max-w-6xl mx-auto mb-10">
           {books.slice(0, 6).map((book, idx) => (
-            <div 
-              key={book.id} 
-              className="animate-fade-in"
-              style={{ animationDelay: `${idx * 100}ms` }}
-            >
+            <div key={book.id} className="animate-fade-in" style={{ animationDelay: `${idx * 80}ms` }}>
               <BookCard book={book} />
             </div>
           ))}
         </div>
 
-        {/* View All Button */}
         <div className="text-center">
-          <Link 
-            href="/books" 
-            className="group inline-flex items-center gap-3 px-8 py-4 bg-background border-2 border-[var(--border)] rounded-2xl font-semibold text-base hover:border-[var(--primary-300)] hover:bg-[var(--primary-50)] dark:hover:bg-[var(--primary-950)] transition-all hover:shadow-lg"
+          <Link
+            href="/books"
+            className="group inline-flex items-center gap-2 px-6 py-3 bg-background border-2 border-border rounded-2xl font-semibold hover:border-navy-300 hover:bg-navy-50 dark:hover:bg-navy-950 transition-all active:scale-[0.97]"
           >
-            <span>Explore All Books</span>
-            <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            Explore All Books
+            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
       </div>
