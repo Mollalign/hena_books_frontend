@@ -41,9 +41,9 @@ export default function HeroSection({ stats }: Props) {
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-5 tracking-tight">
-            {language === "am" ? "ብፅዕና-መጽሐፍት" : "ብፅዕና-Books"}
+            {language === "am" ? "ወደ ብፅዕና ቤተ-መጻሕፍት" : "Welcome To"}
             <span className="block mt-2 gradient-text-hero">
-              {language === "am" ? "እንኳን በደኅና መጡ ።" : "Welcome !"}
+              {language === "am" ? "እንኳን በደኅና መጡ ።" : "ብፅዕና ቤተ-መጻሕፍ"}
             </span>
           </h1>
 
@@ -73,7 +73,7 @@ export default function HeroSection({ stats }: Props) {
               href="/register"
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-base font-semibold border-2 border-border hover:border-navy-300 hover:bg-navy-50 dark:hover:bg-navy-950 transition-all active:scale-[0.97]"
             >
-              <Sparkles className="w-5 h-5 text-gold-500" />
+              {/* <Sparkles className="w-5 h-5 text-gold-500" /> */}
               {language === "am" ? "አካውንት ይፍጠሩ" : "Create Account"}
             </Link>
           </div>

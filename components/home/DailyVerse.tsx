@@ -1,4 +1,4 @@
-import { Quote } from "lucide-react";
+import { BookOpen } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
 const DAILY_VERSES = [
@@ -23,26 +23,35 @@ export default function DailyVerse() {
   const { language } = useLanguage();
 
   return (
-    <section className="py-12 sm:py-16 relative overflow-hidden">
-      <div className="absolute inset-0 bg-navy-gradient" />
+    <section className="py-10 sm:py-16">
+      <div className="container mx-auto px-4">
+        <div className="max-w-2xl mx-auto">
+          <div className="relative rounded-2xl overflow-hidden">
+            {/* Background */}
+            <div className="absolute inset-0 bg-gradient-to-br from-navy-500 via-navy-600 to-navy-800 dark:from-navy-800 dark:via-navy-900 dark:to-navy-950" />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(212,168,83,0.15),transparent_60%)]" />
 
-      <div className="container mx-auto px-4 relative z-10">
-        <div className="max-w-3xl mx-auto">
-          <div className="bg-white/10 backdrop-blur-xl rounded-2xl p-6 sm:p-10 border border-white/20">
-            <div className="flex flex-col sm:flex-row items-center gap-6">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shrink-0">
-                <Quote className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+            <div className="relative px-6 py-8 sm:px-10 sm:py-10">
+              {/* Header */}
+              <div className="flex items-center justify-center gap-2 mb-5">
+                <BookOpen className="w-4 h-4 text-gold-400" />
+                <span className="text-[11px] font-semibold text-gold-400 uppercase tracking-[0.2em]">
+                  {language === "am" ? "የዕለቱ ቃል" : "Daily Verse"}
+                </span>
               </div>
-              <div className="text-center sm:text-left flex-1">
-                <p className="text-xs font-medium text-white/60 uppercase tracking-wider mb-2">
-                  {language === "am" ? "Daily Verse" : "Daily Verse"}
-                </p>
-                <blockquote className="text-lg sm:text-xl md:text-2xl text-white font-medium leading-relaxed mb-3 italic">
+
+              {/* Quote */}
+              <blockquote className="text-center mb-5">
+                <p className="text-base sm:text-lg md:text-xl text-white/90 font-medium leading-relaxed">
                   &ldquo;{verse.text}&rdquo;
-                </blockquote>
-                <cite className="text-gold-300 font-bold text-base">
-                  — {verse.reference}
-                </cite>
+                </p>
+              </blockquote>
+
+              {/* Reference */}
+              <div className="flex items-center justify-center">
+                <span className="px-4 py-1.5 rounded-full bg-white/10 text-gold-500 text-sm font-bold">
+                  {verse.reference}
+                </span>
               </div>
             </div>
           </div>
