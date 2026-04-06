@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import HeroSection from "@/components/home/HeroSection";
 import DailyVerse from "@/components/home/DailyVerse";
-import FeaturedBooks from "@/components/FeaturedBooks";
-import FeaturesGrid from "@/components/home/FeaturesGrid";
 import MissionSection from "@/components/home/MissionSection";
-import CTASection from "@/components/home/CTASection";
+import AboutSection from "@/components/home/AboutSection";
 import { analyticsService } from "@/lib/services/analytics";
 
 export default function HomePage() {
@@ -33,10 +31,10 @@ export default function HomePage() {
     <>
       <HeroSection stats={stats} />
       <DailyVerse />
-      <FeaturedBooks />
-      <FeaturesGrid />
       <MissionSection />
-      <CTASection />
+      <div id="about">
+        <AboutSection />
+      </div>
     </>
   );
 }

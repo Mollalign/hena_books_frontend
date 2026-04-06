@@ -51,10 +51,10 @@ export default function FeaturedBooks() {
           <div className="w-16 h-16 rounded-2xl bg-navy-gradient flex items-center justify-center mx-auto mb-5 shadow-lg">
             <BookOpen className="w-8 h-8 text-white" />
           </div>
-          <h3 className="text-xl font-bold mb-2">No Featured Books Yet</h3>
-          <p className="text-muted-foreground mb-5">Check back soon for our handpicked recommendations</p>
+          <h3 className="text-xl font-bold mb-2">ተመራጭ መጽሐፍት ገና አልተጨመሩም</h3>
+          <p className="text-muted-foreground mb-5">በቅርብ ይመለሱ</p>
           <Link href="/books" className="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-navy-500 text-white font-semibold">
-            Browse All Books <ArrowRight className="w-4 h-4" />
+            ሁሉንም መጽሐፍት ያስሱ <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
@@ -67,11 +67,11 @@ export default function FeaturedBooks() {
         <div className="text-center mb-10 max-w-2xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/50 dark:to-gold-800/50 border border-gold-300 dark:border-gold-700 mb-4">
             <Sparkles className="w-3.5 h-3.5 text-gold-600 dark:text-gold-400" />
-            <span className="text-xs font-semibold text-gold-700 dark:text-gold-300">Editor&apos;s Picks</span>
+            <span className="text-xs font-semibold text-gold-700 dark:text-gold-300">ተመራጭ</span>
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">Featured Resources</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">ተመራጭ መጽሐፍት</h2>
           <p className="text-muted-foreground max-w-lg mx-auto text-sm sm:text-base">
-            Handpicked biblical resources to strengthen your faith
+            እምነትዎን ለማጠናከር የተመረጡ መጽሐፍት
           </p>
         </div>
 
@@ -88,7 +88,7 @@ export default function FeaturedBooks() {
             href="/books"
             className="group inline-flex items-center gap-2 px-6 py-3 bg-background border-2 border-border rounded-2xl font-semibold hover:border-navy-300 hover:bg-navy-50 dark:hover:bg-navy-950 transition-all active:scale-[0.97]"
           >
-            Explore All Books
+            ሁሉንም መጽሐፍት ያስሱ
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>

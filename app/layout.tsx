@@ -12,21 +12,22 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hena Books - Biblical Resources for Spiritual Growth",
+  title: "ብፅዕና መጽሐፍት - የእግዚአብሔርን በጎነት ለሁሉም መናገር",
   description:
-    "Discover biblical teachings, devotionals, and resources to deepen your walk with Christ. A ministry dedicated to making transformative Christian literature accessible to all.",
+    "የብፁዕ ሄኖክ ተስፋዬ የጽሑፍ ሥራ ። ለመጽሐፍ ቅዱስ ታማኝ ሆኖ የእግዚአብሔርን በጎነት ለሁሉም መናገር ይፈልጋል ።",
   keywords: [
+    "ብፅዕና",
+    "መጽሐፍት",
+    "መጽሐፍ ቅዱስ",
+    "ሄኖክ ተስፋዬ",
     "Christian books",
-    "biblical resources",
-    "devotionals",
-    "Bible study",
-    "spiritual growth",
+    "Ethiopian Christian",
   ],
-  authors: [{ name: "Hena Books Ministry" }],
+  authors: [{ name: "ሄኖክ ተስፋዬ ደቸሬ" }],
   openGraph: {
-    title: "Hena Books - Biblical Resources for Spiritual Growth",
+    title: "ብፅዕና መጽሐፍት - የእግዚአብሔርን በጎነት ለሁሉም መናገር",
     description:
-      "Discover biblical teachings, devotionals, and resources to deepen your walk with Christ.",
+      "የብፁዕ ሄኖክ ተስፋዬ የጽሑፍ ሥራ ። ለመጽሐፍ ቅዱስ ታማኝ ሆኖ የእግዚአብሔርን በጎነት ለሁሉም መናገር ።",
     type: "website",
   },
 };
@@ -47,7 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="am" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

@@ -13,7 +13,7 @@ export default function AdminLayout({
       <Navbar />
       <div className="flex pt-16">
         <AdminSidebar />
-        <main className="flex-1 lg:ml-72 w-full min-w-0 p-4 sm:p-6 lg:p-8 pt-20 lg:pt-6">
+        <main className="flex-1 lg:ml-72 w-full min-w-0 p-4 sm:p-6 lg:p-8 pt-24 lg:pt-6">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

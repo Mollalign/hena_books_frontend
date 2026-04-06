@@ -1,26 +1,26 @@
-import { BookOpen, Zap, Heart, CheckCircle2 } from "lucide-react";
+import { BookOpen, Globe, Heart, CheckCircle2 } from "lucide-react";
 
 const features = [
   {
     icon: BookOpen,
-    title: "መጽሐፍ ቅዱሳዊ",
-    description: "ሁሉም ግብዓቶች ከፕሮቴስታንት መጽሐፍ ቅዱሳዊ ትምህርት ጋር የተጣጣሙ ናቸው",
+    title: "መጽሐፍ ቅዱስ ተኮር",
+    description: "ሁሉም ይዘቶች ከመጽሐፍ ቅዱስ ትምህርት ጋር የተጣጣሙ ናቸው ።",
     stat: "100%",
-    statLabel: "የተረጋገጠ",
+    statLabel: "ታማኝ",
   },
   {
-    icon: Zap,
+    icon: Globe,
     title: "በየትኛውም ቦታ ያንብቡ",
-    description: "ቤተ-መጻሕፍትዎን በማንኛውም መሣሪያ፣ በማንኛውም ጊዜ ያግኙ",
+    description: "በማንኛውም መሣሪያ፣ በማንኛውም ጊዜ ያግኙ ።",
     stat: "24/7",
     statLabel: "ተደራሽ",
   },
   {
     icon: Heart,
-    title: "Free",
-    description: "ምንም የተደበቀ ክፍያ ወይም የደንበኝነት ምዝገባ አያስፈልግም",
+    title: "100% ነጻ",
+    description: "ምንም ዓይነት ክፍያ አያስፈልግም ። የእግዚአብሔርን በጎነት ማወቅ ለሁሉም ነው ።",
     stat: "100%",
-    statLabel: "ነፃ",
+    statLabel: "ነጻ",
   },
 ];
 
@@ -31,13 +31,13 @@ export default function FeaturesGrid() {
         <div className="text-center mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-background border border-border mb-3">
             <CheckCircle2 className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-semibold">Why Hena Books?</span>
+            <span className="text-sm font-semibold">HenaBooks ለምን?</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-            Built for Believers
+            ለሁሉም የተገነባ ነዉ ።
           </h2>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Everything you need to grow in faith, all in one place
+          <p className="text-foreground/60 max-w-lg mx-auto">
+            የእግዚአብሔርን በጎነት እንድናዉቅ ይገባናል ።
           </p>
         </div>
 

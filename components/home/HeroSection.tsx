@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, ArrowRight, Sparkles, Star } from "lucide-react";
+import Image from "next/image";
+import { BookOpen, ArrowRight, Sparkles } from "lucide-react";
 
 interface Props {
   stats: { totalBooks: number; totalUsers: number; totalSessions: number } | null;
@@ -25,23 +26,30 @@ export default function HeroSection({ stats }: Props) {
             visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gradient-to-r from-gold-100 to-gold-200 dark:from-gold-900/50 dark:to-gold-800/50 border border-gold-300 dark:border-gold-700 mb-6">
-            <Star className="w-3.5 h-3.5 text-gold-600 fill-gold-500" />
-            <span className="text-xs font-semibold text-gold-700 dark:text-gold-300">
-              የብፁዓን መፅሃፍት መደብር
-            </span>
+          {/* Logo */}
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/logo.jpeg"
+              alt="ብፅዕና"
+              width={100}
+              height={100}
+              className="rounded-full shadow-2xl border-4 border-gold-300 dark:border-gold-600"
+              priority
+            />
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-5 tracking-tight">
-            ወደ ብፁዓን መፅሐፍት መደብር
+            ብፅዕና መጽሐፍት
             <span className="block mt-2 gradient-text-hero">
-              እንኳን በደህና መጡ ።
+              እንኳን በደኅና መጡ ።
             </span>
           </h1>
 
-          <p className="text-base sm:text-lg text-foreground/70 max-w-xl mx-auto mb-8 leading-relaxed">
-            መንፈሳዊ ሕይወትዎን የሚያሳድጉ የመጽሐፍ ቅዱስ ትምህርቶችን፣ የተለያዩ መንፈሰዊ
-            መፅሐፍቶችን እዚህ ያገኛሉ።
+          <p className="text-base sm:text-lg text-foreground/70 max-w-xl mx-auto mb-3 leading-relaxed">
+            &ldquo;እግዚአብሔር ፍቅር ነዉ&rdquo; የተሰኘዉን መጽሐፍ ለማንበብ እንኳን በደኅና መጡ ።
+          </p>
+          <p className="text-sm sm:text-base text-foreground/60 max-w-lg mx-auto mb-8">
+            የብፁዕ ሄኖክ ተስፋዬ የጽሑፍ ሥራ እዚህ ይገኛል ።
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-10">
@@ -50,7 +58,7 @@ export default function HeroSection({ stats }: Props) {
               className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-base font-semibold text-white bg-navy-gradient shadow-lg hover:shadow-xl transition-all active:scale-[0.97]"
             >
               <BookOpen className="w-5 h-5" />
-              Start Reading
+              ማንበብ ይጀምሩ
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -58,16 +66,16 @@ export default function HeroSection({ stats }: Props) {
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-base font-semibold border-2 border-border hover:border-navy-300 hover:bg-navy-50 dark:hover:bg-navy-950 transition-all active:scale-[0.97]"
             >
               <Sparkles className="w-5 h-5 text-gold-500" />
-              Create Free Account
+              አካዉንት ይፍጠሩ
             </Link>
           </div>
 
           {stats && (
             <div className="flex flex-wrap justify-center gap-8 pt-6 border-t border-border">
               {[
-                { value: stats.totalBooks, label: "Books" },
-                { value: stats.totalUsers, label: "Readers" },
-                { value: stats.totalSessions, label: "Sessions" },
+                { value: stats.totalBooks, label: "መጽሐፍት" },
+                { value: stats.totalUsers, label: "አንባቢዎች" },
+                { value: stats.totalSessions, label: "ክፍለ-ጊዜዎች" },
               ].map((s) => (
                 <div key={s.label} className="text-center">
                   <div className="text-2xl sm:text-3xl font-bold">{s.value}+</div>

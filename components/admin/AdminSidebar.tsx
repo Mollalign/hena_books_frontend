@@ -86,7 +86,7 @@ export default function AdminSidebar() {
   return (
     <>
       {/* Mobile Menu Button */}
-      <div className="lg:hidden fixed top-[4.5rem] sm:top-[5.5rem] left-0 right-0 z-30 bg-background border-b border-[var(--border)] px-4 py-3">
+      <div className="lg:hidden fixed top-16 left-0 right-0 z-30 bg-background border-b border-[var(--border)] px-4 py-2.5">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-between w-full p-3 rounded-xl bg-[var(--muted)] hover:bg-[var(--muted)]/80 transition-all"
@@ -126,7 +126,7 @@ export default function AdminSidebar() {
       <aside
         ref={sidebarRef}
         className={cn(
-          "fixed left-0 top-16 sm:top-20 h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)] bg-background border-r border-[var(--border)] z-40 transition-all duration-300 ease-out",
+          "fixed left-0 top-16 h-[calc(100dvh-4rem)] bg-background border-r border-[var(--border)] z-40 transition-all duration-300 ease-out",
           "w-72 shadow-xl lg:shadow-none",
           isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}

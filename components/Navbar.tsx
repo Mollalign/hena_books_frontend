@@ -1,13 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import {
   LogOut,
   User,
   Menu,
   X,
-  BookOpen,
   LayoutDashboard,
   Sun,
   Moon,
@@ -28,15 +28,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/books", label: "Books" },
-  { href: "#about", label: "About" },
-  { href: "#contact", label: "Contact" },
+  { href: "/", label: "መነሻ" },
+  { href: "/books", label: "መጽሐፍት" },
+  { href: "#about", label: "ስለ እኛ" },
+  { href: "#contact", label: "ግንኙነት" },
 ];
 
 export default function Navbar() {
   const { user, logout } = useAuth();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -63,24 +63,25 @@ export default function Navbar() {
 
   return (
     <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 overflow-x-hidden ${
         isScrolled || isMobileMenuOpen
           ? "bg-background/95 backdrop-blur-xl shadow-lg shadow-black/5 border-b border-border"
           : "bg-transparent"
       }`}
     >
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 max-w-full overflow-hidden">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group" onClick={close}>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-gold-400 to-gold-600 rounded-xl blur-lg opacity-40 group-hover:opacity-60 transition-opacity" />
-              <div className="relative w-10 h-10 rounded-xl bg-navy-gradient flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                <BookOpen className="w-5 h-5 text-white" />
-              </div>
-            </div>
+            <Image
+              src="/logo.jpeg"
+              alt="ብፅዕና"
+              width={40}
+              height={40}
+              className="rounded-full shadow-lg group-hover:scale-105 transition-transform"
+            />
             <span className="text-lg font-bold tracking-tight text-navy-700 dark:text-navy-400">
-              Hena Books
+              ብፅዕና
             </span>
           </Link>
 
@@ -134,13 +135,13 @@ export default function Navbar() {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild className="cursor-pointer">
                     <Link href="/profile" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" /> Profile
+                      <User className="mr-2 h-4 w-4" /> መገለጫ
                     </Link>
                   </DropdownMenuItem>
                   {user.role === "admin" && (
                     <DropdownMenuItem asChild className="cursor-pointer">
                       <Link href="/admin/dashboard" className="flex items-center">
-                        <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                        <LayoutDashboard className="mr-2 h-4 w-4" /> ዳሽቦርድ
                       </Link>
                     </DropdownMenuItem>
                   )}
@@ -149,7 +150,7 @@ export default function Navbar() {
                     onClick={logout}
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50 dark:focus:bg-red-950"
                   >
-                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                    <LogOut className="mr-2 h-4 w-4" /> ውጣ
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -159,14 +160,14 @@ export default function Navbar() {
                   href="/login"
                   className="px-4 py-2.5 rounded-full text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  Sign In
+                  ግባ
                 </Link>
                 <Link
                   href="/register"
                   className="px-5 py-2.5 rounded-full text-sm font-semibold text-white bg-navy-gradient"
                 >
                   <span className="flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" /> Get Started
+                    <Sparkles className="w-4 h-4" /> ተመዝገብ
                   </span>
                 </Link>
               </div>
@@ -241,7 +242,7 @@ export default function Navbar() {
                   onClick={close}
                 >
                   <span className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-navy-500" /> My Profile
+                    <User className="w-5 h-5 text-navy-500" /> መገለጫ
                   </span>
                   <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </Link>
@@ -253,7 +254,7 @@ export default function Navbar() {
                     onClick={close}
                   >
                     <span className="flex items-center gap-3">
-                      <LayoutDashboard className="w-5 h-5 text-gold-500" /> Dashboard
+                      <LayoutDashboard className="w-5 h-5 text-gold-500" /> ዳሽቦርድ
                     </span>
                     <ChevronRight className="w-4 h-4 text-muted-foreground" />
                   </Link>
@@ -263,7 +264,7 @@ export default function Navbar() {
                   onClick={() => { logout(); close(); }}
                   className="flex items-center gap-3 w-[calc(100%-1rem)] mx-2 px-4 py-3.5 rounded-xl text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-950/50 transition-all active:scale-[0.98] text-left"
                 >
-                  <LogOut className="w-5 h-5" /> Sign Out
+                  <LogOut className="w-5 h-5" /> ውጣ
                 </button>
               </>
             ) : (
@@ -273,14 +274,14 @@ export default function Navbar() {
                   className="flex items-center justify-center px-4 py-3.5 rounded-xl text-base font-semibold bg-muted hover:bg-muted/80 transition-all active:scale-[0.98]"
                   onClick={close}
                 >
-                  Sign In
+                  ግባ
                 </Link>
                 <Link
                   href="/register"
                   className="flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl text-base font-semibold text-white bg-navy-gradient shadow-lg transition-all active:scale-[0.98]"
                   onClick={close}
                 >
-                  <Sparkles className="w-4 h-4" /> Get Started Free
+                  <Sparkles className="w-4 h-4" /> ተመዝገብ
                 </Link>
               </div>
             )}

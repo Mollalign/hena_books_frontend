@@ -3,6 +3,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html, body {
+  overflow-x: hidden;
+}
+
 :root {
   --primary-50: #f0f4f8;
   --primary-100: #d9e2ec;

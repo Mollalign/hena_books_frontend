@@ -13,17 +13,16 @@ export default function CTASection() {
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm mb-6">
             <Sparkles className="w-3.5 h-3.5 text-gold-300" />
             <span className="text-sm font-semibold text-white">
-              Start Your Journey
+              ጉዞዎን ይጀምሩ
             </span>
           </div>
 
           <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-5 leading-tight">
-            Ready to Grow in Faith?
+            በእምነት ለማደግ ዝግጁ ነዎት?
           </h2>
 
           <p className="text-base sm:text-lg text-white/80 mb-8 max-w-xl mx-auto leading-relaxed">
-            Join thousands of believers discovering life-changing Christian
-            resources. Your spiritual journey starts here.
+            ሕይወትን የሚለውጡ ክርስቲያናዊ መጽሐፍትን ያግኙ ። መንፈሳዊ ጉዞዎ እዚህ ይጀምራል ።
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -32,7 +31,7 @@ export default function CTASection() {
               className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white text-navy-600 rounded-2xl font-bold hover:bg-gold-100 transition-all shadow-xl active:scale-[0.97]"
             >
               <Sparkles className="w-5 h-5 text-gold-500" />
-              Get Started Free
+              በነጻ ይጀምሩ
               <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
             <Link
@@ -40,7 +39,7 @@ export default function CTASection() {
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 rounded-2xl font-bold hover:bg-white/20 transition-all active:scale-[0.97]"
             >
               <BookOpen className="w-5 h-5" />
-              Browse Library
+              መጽሐፍት ያስሱ
             </Link>
           </div>
         </div>
