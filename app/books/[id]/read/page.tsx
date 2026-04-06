@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { booksService } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
-import { getApiBaseUrl } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -75,9 +74,7 @@ export default function BookReaderPage() {
 
         setBookData(data);
 
-        // Create PDF URL via backend proxy (handles auth and CORS)
-        const apiBaseUrl = getApiBaseUrl();
-        const proxyUrl = `${apiBaseUrl}/api/v1/books/${params.id}/read/file`;
+        const proxyUrl = `/api/v1/books/${params.id}/read/file`;
         console.log("Fetching PDF from:", proxyUrl);
 
         // Fetch the PDF as a blob and create an object URL with timeout
@@ -91,8 +88,6 @@ export default function BookReaderPage() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-            mode: 'cors',
-            credentials: 'omit',
             signal: controller.signal,
           });
 

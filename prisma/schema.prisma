@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  USER
+  ADMIN
+
+  @@map("userrole")
+}
+
+enum BookCategory {
+  BIBLICAL_STUDIES
+  THEOLOGY
+  DEVOTIONAL
+  CHRISTIAN_LIVING
+  PRAYER_WORSHIP
+  CHURCH_HISTORY
+  APOLOGETICS
+  FAMILY_MARRIAGE
+  YOUTH_CHILDREN
+  MISSIONS_EVANGELISM
+  SPIRITUAL_GROWTH
+  BIOGRAPHY_TESTIMONY
+  COMMENTARY
+  REFERENCE
+  OTHER
+
+  @@map("bookcategory")
+}
+
+// ─── Models ─────────────────────────────────────────────────────────────────
+
+model User {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String   @unique
+  password_hash String   @db.VarChar(255)
+  name          String   @db.VarChar(100)
+  role          UserRole @default(USER)
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now()) @db.Timestamptz
+  updated_at    DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  reading_sessions ReadingSession[]
+  password_resets  PasswordReset[]
+
+  @@map("users")
+}
+
+model Book {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title           String       @db.VarChar(255)
+  author          String?      @db.VarChar(255)
+  description     String?
+  category        BookCategory @default(OTHER)
+  scripture_focus String?      @db.VarChar(255)
+  cover_url       String?      @db.VarChar(500)
+  cover_public_id String?      @db.VarChar(255)
+  file_url        String       @db.VarChar(500)
+  file_public_id  String       @db.VarChar(255)
+  page_count      Int?
+  published_date  DateTime?    @db.Date
+  is_featured     Boolean      @default(false)
+  is_published    Boolean      @default(true)
+  created_at      DateTime     @default(now()) @db.Timestamptz
+  updated_at      DateTime     @default(now()) @updatedAt @db.Timestamptz
+
+  reading_sessions ReadingSession[]
+
+  @@index([title])
+  @@index([author])
+  @@index([category])
+  @@index([is_featured])
+  @@index([is_published])
+  @@map("books")
+}
+
+model ReadingSession {
+  id                 Int       @id @default(autoincrement())
+  user_id            String    @db.Uuid
+  book_id            String    @db.Uuid
+  started_at         DateTime  @default(now())
+  ended_at           DateTime?
+  last_page_read     Int       @default(1)
+  total_time_seconds Int       @default(0)
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [book_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([book_id])
+  @@map("reading_sessions")
+}
+
+model PasswordReset {
+  id         Int       @id @default(autoincrement())
+  user_id    String    @db.Uuid
+  email      String    @db.VarChar(255)
+  code       String    @db.VarChar(6)
+  expires_at DateTime
+  used_at    DateTime?
+  created_at DateTime  @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([email])
+  @@index([code])
+  @@map("password_resets")
+}
