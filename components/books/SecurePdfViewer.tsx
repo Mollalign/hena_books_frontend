@@ -1,582 +1,414 @@
 "use client";
 
-import { useEffect, useCallback, useState, useRef, useMemo } from "react";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Maximize2, Menu, RotateCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useCallback, useState, useRef, useImperativeHandle, forwardRef } from "react";
+
+export interface PdfViewerHandle {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  resetZoom: () => void;
+  getScale: () => number;
+  scrollToPage: (page: number) => void;
+}
 
 interface SecurePdfViewerProps {
   pdfUrl: string;
   title: string;
   isAdmin?: boolean;
+  initialPage?: number;
   onPageChange?: (page: number) => void;
+  onScaleChange?: (scale: number) => void;
+  onLoadComplete?: (numPages: number) => void;
 }
 
-/**
- * Secure PDF Viewer Component using PDF.js directly
- * 
- * Features:
- * - Continuous scrollable PDF (all pages rendered)
- * - Zoom with mouse wheel and pinch gestures
- * - Mobile-first responsive design
- * - Uses PDF.js from CDN (no webpack/Turbopack issues)
- * - Download/print disabled for non-admin users
- * - Context menu disabled to prevent right-click save
- */
-export default function SecurePdfViewer({
-  pdfUrl,
-  title,
-  isAdmin = false,
-  onPageChange,
-}: SecurePdfViewerProps) {
-  const [isMounted, setIsMounted] = useState(false);
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
-  const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showMobileMenu, setShowMobileMenu] = useState(false);
-  const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
-  const containerRef = useRef<HTMLDivElement>(null);
-  const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
-  const renderTasksRef = useRef<Map<number, any>>(new Map());
+const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
+  function SecurePdfViewer({ pdfUrl, title, isAdmin = false, initialPage, onPageChange, onScaleChange, onLoadComplete }, ref) {
+    const [isMounted, setIsMounted] = useState(false);
+    const [pdfDoc, setPdfDoc] = useState<any>(null);
+    const [numPages, setNumPages] = useState(0);
+    const [scale, setScale] = useState(1.0);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
+    const renderTasksRef = useRef<Map<number, any>>(new Map());
+    const renderedPagesRef = useRef<Set<number>>(new Set());
+    const scaleRef = useRef(scale);
 
-  // Calculate responsive scale based on screen size (mobile-first)
-  const calculateInitialScale = useCallback(() => {
-    if (typeof window === "undefined") return 1.0;
-    const width = window.innerWidth;
-    if (width < 640) return 0.8; // Mobile
-    if (width < 768) return 1.0; // Small tablet
-    if (width < 1024) return 1.2; // Tablet
-    return 1.5; // Desktop
-  }, []);
+    // Store callback props in refs to avoid infinite re-render loops
+    // (parent passes inline arrows that change identity every render)
+    const onPageChangeRef = useRef(onPageChange);
+    const onScaleChangeRef = useRef(onScaleChange);
+    const onLoadCompleteRef = useRef(onLoadComplete);
+    onPageChangeRef.current = onPageChange;
+    onScaleChangeRef.current = onScaleChange;
+    onLoadCompleteRef.current = onLoadComplete;
 
-  // Load PDF.js from CDN
-  useEffect(() => {
-    const loadPdfJs = async () => {
-      if (typeof window === "undefined") return;
+    // Keep scale ref in sync
+    useEffect(() => {
+      scaleRef.current = scale;
+      onScaleChangeRef.current?.(scale);
+    }, [scale]);
 
-      // Check if PDF.js is already loaded
-      if ((window as any).pdfjsLib) {
-        setIsMounted(true);
-        setScale(calculateInitialScale());
-        return;
+    const calculateInitialScale = useCallback(() => {
+      if (typeof window === "undefined") return 1.0;
+      const width = window.innerWidth;
+      if (width < 480) return 0.65;
+      if (width < 640) return 0.8;
+      if (width < 768) return 1.0;
+      if (width < 1024) return 1.2;
+      return 1.5;
+    }, []);
+
+    const scrollToPage = useCallback((page: number) => {
+      const el = scrollContainerRef.current;
+      if (!el || numPages === 0 || page < 1 || page > numPages) return;
+      const pageElement = el.querySelector(`[data-page="${page}"]`);
+      if (pageElement) {
+        pageElement.scrollIntoView({ behavior: "smooth", block: "start" });
       }
+    }, [numPages]);
 
-      try {
-        // Load PDF.js from CDN
-        const script = document.createElement("script");
-        script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
-        script.async = true;
-        script.onload = () => {
-          // Set worker source
-          (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc =
-            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    useImperativeHandle(ref, () => ({
+      zoomIn: () => setScale((prev) => Math.min(prev + 0.25, 3)),
+      zoomOut: () => setScale((prev) => Math.max(prev - 0.25, 0.5)),
+      resetZoom: () => setScale(calculateInitialScale()),
+      getScale: () => scaleRef.current,
+      scrollToPage,
+    }), [calculateInitialScale, scrollToPage]);
+
+    // Load PDF.js library
+    useEffect(() => {
+      const loadPdfJs = async () => {
+        if (typeof window === "undefined") return;
+
+        if ((window as any).pdfjsLib) {
           setIsMounted(true);
           setScale(calculateInitialScale());
-        };
-        script.onerror = () => {
-          setError("Failed to load PDF.js library");
-          setLoading(false);
-        };
-        document.head.appendChild(script);
-      } catch (err) {
-        setError("Failed to initialize PDF viewer");
-        setLoading(false);
-      }
-    };
-
-    loadPdfJs();
-  }, [calculateInitialScale]);
-
-  // Handle window resize for responsive scale
-  useEffect(() => {
-    const handleResize = () => {
-      const newScale = calculateInitialScale();
-      setScale(newScale);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [calculateInitialScale]);
-
-  // Load PDF document
-  useEffect(() => {
-    if (!isMounted || !pdfUrl) return;
-
-    const loadPdf = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const pdfjsLib = (window as any).pdfjsLib;
-        if (!pdfjsLib) {
-          throw new Error("PDF.js not loaded");
+          return;
         }
 
-        // Fetch PDF as array buffer
-        const response = await fetch(pdfUrl);
-        if (!response.ok) throw new Error("Failed to fetch PDF");
-        
-        const arrayBuffer = await response.arrayBuffer();
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-        const pdf = await loadingTask.promise;
-
-        setPdfDoc(pdf);
-        setNumPages(pdf.numPages);
-        setLoading(false);
-      } catch (err: any) {
-        console.error("Error loading PDF:", err);
-        setError(err.message || "Failed to load PDF");
-        setLoading(false);
-      }
-    };
-
-    loadPdf();
-  }, [isMounted, pdfUrl]);
-
-  // Render a single page
-  const renderPage = useCallback(async (pageNumber: number) => {
-    if (!pdfDoc || renderedPages.has(pageNumber)) return;
-
-    const canvas = canvasRefs.current.get(pageNumber);
-    if (!canvas) return;
-
-    try {
-      const page = await pdfDoc.getPage(pageNumber);
-      const context = canvas.getContext("2d", { alpha: false });
-      if (!context) return;
-
-      // Cancel previous render if exists
-      const existingTask = renderTasksRef.current.get(pageNumber);
-      if (existingTask) {
-        existingTask.cancel();
-      }
-
-      const viewport = page.getViewport({ scale });
-      const dpr = window.devicePixelRatio || 1;
-      
-      canvas.width = viewport.width * dpr;
-      canvas.height = viewport.height * dpr;
-      canvas.style.width = `${viewport.width}px`;
-      canvas.style.height = `${viewport.height}px`;
-
-      context.scale(dpr, dpr);
-
-      const renderContext = {
-        canvasContext: context,
-        viewport: viewport,
+        try {
+          const script = document.createElement("script");
+          script.src = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js";
+          script.async = true;
+          script.onload = () => {
+            (window as any).pdfjsLib.GlobalWorkerOptions.workerSrc =
+              "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+            setIsMounted(true);
+            setScale(calculateInitialScale());
+          };
+          script.onerror = () => {
+            setError("Failed to load PDF viewer");
+            setLoading(false);
+          };
+          document.head.appendChild(script);
+        } catch {
+          setError("Failed to initialize PDF viewer");
+          setLoading(false);
+        }
       };
 
-      const renderTask = page.render(renderContext);
-      renderTasksRef.current.set(pageNumber, renderTask);
-      
-      await renderTask.promise;
-      
-      setRenderedPages((prev) => new Set([...prev, pageNumber]));
-      
-      // Track current page for analytics
-      if (onPageChange && containerRef.current) {
-        const scrollTop = containerRef.current.scrollTop;
-        const pageHeight = viewport.height;
-        const currentPage = Math.floor(scrollTop / pageHeight) + 1;
-        if (currentPage !== pageNumber) {
-          onPageChange(currentPage);
+      loadPdfJs();
+    }, [calculateInitialScale]);
+
+    // Handle window resize
+    useEffect(() => {
+      const handleResize = () => setScale(calculateInitialScale());
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }, [calculateInitialScale]);
+
+    // Load the PDF document (no callback props in deps!)
+    useEffect(() => {
+      if (!isMounted || !pdfUrl) return;
+
+      let cancelled = false;
+
+      const loadPdf = async () => {
+        try {
+          setLoading(true);
+          setError(null);
+          const pdfjsLib = (window as any).pdfjsLib;
+          if (!pdfjsLib) throw new Error("PDF.js not loaded");
+
+          const response = await fetch(pdfUrl);
+          if (!response.ok) throw new Error("Failed to fetch PDF");
+
+          const arrayBuffer = await response.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+          if (cancelled) return;
+
+          setPdfDoc(pdf);
+          setNumPages(pdf.numPages);
+          onLoadCompleteRef.current?.(pdf.numPages);
+          setLoading(false);
+        } catch (err: any) {
+          if (cancelled) return;
+          console.error("Error loading PDF:", err);
+          setError(err.message || "Failed to load PDF");
+          setLoading(false);
+        }
+      };
+
+      loadPdf();
+
+      return () => { cancelled = true; };
+    }, [isMounted, pdfUrl]);
+
+    // Render a single page — no state dependencies that could cause loops
+    const renderPage = useCallback(async (pageNumber: number, targetScale: number) => {
+      if (!pdfDoc) return;
+      if (renderedPagesRef.current.has(pageNumber)) return;
+
+      const canvas = canvasRefs.current.get(pageNumber);
+      if (!canvas) return;
+
+      // Mark as rendering to prevent duplicate calls
+      renderedPagesRef.current.add(pageNumber);
+
+      try {
+        const page = await pdfDoc.getPage(pageNumber);
+
+        // Check if scale changed while we were waiting
+        if (scaleRef.current !== targetScale) {
+          renderedPagesRef.current.delete(pageNumber);
+          return;
+        }
+
+        const context = canvas.getContext("2d", { alpha: false });
+        if (!context) {
+          renderedPagesRef.current.delete(pageNumber);
+          return;
+        }
+
+        // Cancel any previous render task for this page
+        const existingTask = renderTasksRef.current.get(pageNumber);
+        if (existingTask) {
+          try { existingTask.cancel(); } catch { }
+        }
+
+        const viewport = page.getViewport({ scale: targetScale });
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
+
+        // Set canvas to high-res dimensions
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
+        canvas.style.width = `${viewport.width}px`;
+        canvas.style.height = `${viewport.height}px`;
+
+        // Render at full high-res resolution
+        const renderViewport = page.getViewport({ scale: targetScale * dpr });
+        const renderTask = page.render({ canvasContext: context, viewport: renderViewport });
+        renderTasksRef.current.set(pageNumber, renderTask);
+        await renderTask.promise;
+      } catch (err: any) {
+        renderedPagesRef.current.delete(pageNumber);
+        if (err.name !== "RenderingCancelledException") {
+          console.error(`Error rendering page ${pageNumber}:`, err);
         }
       }
-    } catch (err: any) {
-      if (err.name !== "RenderingCancelledException") {
-        console.error(`Error rendering page ${pageNumber}:`, err);
+    }, [pdfDoc]);
+
+    // On scale change, clear rendered state so IntersectionObserver re-renders visible pages
+    useEffect(() => {
+      if (!pdfDoc || numPages === 0) return;
+
+      const currentScale = scale;
+
+      renderTasksRef.current.forEach((task) => {
+        try { task.cancel(); } catch { }
+      });
+      renderTasksRef.current.clear();
+      renderedPagesRef.current.clear();
+
+      // Only render the first few pages immediately; IntersectionObserver handles the rest
+      const initialPages = Math.min(3, numPages);
+      for (let i = 1; i <= initialPages; i++) {
+        renderPage(i, currentScale);
       }
-    }
-  }, [pdfDoc, scale, renderedPages, onPageChange]);
+    }, [pdfDoc, numPages, scale, renderPage]);
 
-  // Render all pages when PDF loads or scale changes
-  useEffect(() => {
-    if (!pdfDoc || numPages === 0) return;
+    // Scroll to initial page after first render completes
+    const hasScrolledToInitial = useRef(false);
+    useEffect(() => {
+      if (!pdfDoc || numPages === 0 || !initialPage || initialPage <= 1 || hasScrolledToInitial.current) return;
+      const timer = setTimeout(() => {
+        scrollToPage(initialPage);
+        hasScrolledToInitial.current = true;
+      }, 300);
+      return () => clearTimeout(timer);
+    }, [pdfDoc, numPages, initialPage, scrollToPage]);
 
-    // Render all pages
-    for (let i = 1; i <= numPages; i++) {
-      if (!renderedPages.has(i)) {
-        renderPage(i);
-      }
-    }
-  }, [pdfDoc, numPages, scale, renderPage, renderedPages]);
+    // IntersectionObserver for lazy loading off-screen pages
+    useEffect(() => {
+      if (!pdfDoc || numPages === 0) return;
 
-  // Re-render all pages when scale changes
-  useEffect(() => {
-    if (!pdfDoc || numPages === 0) return;
-    
-    // Clear rendered pages and re-render with new scale
-    setRenderedPages(new Set());
-    renderTasksRef.current.clear();
-    
-    // Small delay to ensure canvas refs are ready
-    setTimeout(() => {
-      for (let i = 1; i <= numPages; i++) {
-        renderPage(i);
-      }
-    }, 100);
-  }, [scale]);
-
-  // Intersection Observer for lazy loading pages
-  useEffect(() => {
-    if (!pdfDoc || numPages === 0) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const pageNum = parseInt(entry.target.getAttribute("data-page") || "0");
-            if (pageNum > 0 && !renderedPages.has(pageNum)) {
-              renderPage(pageNum);
+      const currentScale = scale;
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              const pageNum = parseInt(entry.target.getAttribute("data-page") || "0");
+              if (pageNum > 0 && !renderedPagesRef.current.has(pageNum)) {
+                renderPage(pageNum, currentScale);
+              }
             }
-          }
-        });
-      },
-      { rootMargin: "200px" }
-    );
+          });
+        },
+        { rootMargin: "200px" }
+      );
 
-    const pageElements = document.querySelectorAll("[data-page]");
-    pageElements.forEach((el) => observer.observe(el));
+      const pageElements = document.querySelectorAll("[data-page]");
+      pageElements.forEach((el) => observer.observe(el));
+      return () => observer.disconnect();
+    }, [pdfDoc, numPages, scale, renderPage]);
 
-    return () => observer.disconnect();
-  }, [pdfDoc, numPages, renderedPages, renderPage]);
-
-  // Prevent context menu (right-click) for non-admin users
-  const handleContextMenu = useCallback(
-    (e: MouseEvent) => {
-      if (!isAdmin) {
-        e.preventDefault();
-        return false;
-      }
-    },
-    [isAdmin]
-  );
-
-  // Prevent keyboard shortcuts for download/print
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (!isAdmin) {
-        // Prevent Ctrl+S (save), Ctrl+P (print)
-        if (
-          (e.ctrlKey || e.metaKey) &&
-          (e.key === "s" || e.key === "S" || e.key === "p" || e.key === "P")
-        ) {
+    // Security: prevent right-click and keyboard shortcuts
+    useEffect(() => {
+      const handler = (e: MouseEvent) => { if (!isAdmin) { e.preventDefault(); return false; } };
+      const keyHandler = (e: KeyboardEvent) => {
+        if (!isAdmin && (e.ctrlKey || e.metaKey) && ["s", "S", "p", "P"].includes(e.key)) {
           e.preventDefault();
           return false;
         }
-      }
-    },
-    [isAdmin]
-  );
+      };
+      document.addEventListener("contextmenu", handler);
+      document.addEventListener("keydown", keyHandler);
+      return () => { document.removeEventListener("contextmenu", handler); document.removeEventListener("keydown", keyHandler); };
+    }, [isAdmin]);
 
-  useEffect(() => {
-    document.addEventListener("contextmenu", handleContextMenu);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("contextmenu", handleContextMenu);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [handleContextMenu, handleKeyDown]);
-
-  // Zoom with mouse wheel
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    const handleWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.1 : 0.1;
-        setScale((prev) => {
-          const newScale = Math.max(0.5, Math.min(3, prev + delta));
-          return newScale;
-        });
-      }
-    };
-
-    containerRef.current.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      containerRef.current?.removeEventListener("wheel", handleWheel);
-    };
-  }, []);
-
-  // Pinch zoom for touch devices
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    let initialDistance = 0;
-    let initialScale = scale;
-
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        initialDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        initialScale = scale;
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const currentDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        const scaleChange = currentDistance / initialDistance;
-        const newScale = Math.max(0.5, Math.min(3, initialScale * scaleChange));
-        setScale(newScale);
-      }
-    };
-
-    containerRef.current.addEventListener("touchstart", handleTouchStart, { passive: true });
-    containerRef.current.addEventListener("touchmove", handleTouchMove, { passive: false });
-
-    return () => {
-      containerRef.current?.removeEventListener("touchstart", handleTouchStart);
-      containerRef.current?.removeEventListener("touchmove", handleTouchMove);
-    };
-  }, [scale]);
-
-  const zoomIn = useCallback(() => {
-    setScale((prev) => Math.min(prev + 0.25, 3));
-  }, []);
-
-  const zoomOut = useCallback(() => {
-    setScale((prev) => Math.max(prev - 0.25, 0.5));
-  }, []);
-
-  const resetZoom = useCallback(() => {
-    setScale(calculateInitialScale());
-  }, [calculateInitialScale]);
-
-  const toggleFullscreen = async () => {
-    if (!containerRef.current) return;
-
-    try {
-      if (!document.fullscreenElement) {
-        await containerRef.current.requestFullscreen();
-      } else {
-        await document.exitFullscreen();
-      }
-    } catch (err) {
-      console.error("Fullscreen error:", err);
-    }
-  };
-
-  // Track scroll position for page change
-  useEffect(() => {
-    if (!containerRef.current || !onPageChange || numPages === 0) return;
-
-    const handleScroll = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const scrollTop = container.scrollTop;
-      const pageHeight = container.scrollHeight / numPages;
-      const currentPage = Math.floor(scrollTop / pageHeight) + 1;
-      
-      if (currentPage >= 1 && currentPage <= numPages) {
-        onPageChange(currentPage);
-      }
-    };
-
-    containerRef.current.addEventListener("scroll", handleScroll, { passive: true });
-    return () => {
-      containerRef.current?.removeEventListener("scroll", handleScroll);
-    };
-  }, [numPages, onPageChange]);
-
-  if (loading && !pdfDoc) {
-    return (
-      <div className="flex items-center justify-center h-full bg-[#2d2520] min-h-[50vh]">
-        <div className="text-center px-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--primary-400)] mx-auto mb-4"></div>
-          <p className="text-[#a89a8e] text-sm sm:text-base">Loading PDF...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-full bg-[#2d2520] min-h-[50vh] px-4">
-        <div className="text-center max-w-md">
-          <p className="text-red-400 mb-4 text-sm sm:text-base">{error}</p>
-          <Button
-            onClick={() => window.location.reload()}
-            className="bg-[var(--primary-500)] hover:bg-[var(--primary-600)] text-sm sm:text-base"
-          >
-            Retry
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      ref={containerRef}
-      className={`secure-pdf-viewer ${!isAdmin ? "secure-pdf-viewer--restricted" : ""}`}
-      style={{
-        height: "100%",
-        width: "100%",
-        display: "flex",
-        flexDirection: "column",
-        backgroundColor: "#2d2520",
-        userSelect: isAdmin ? "auto" : "none",
-        overflow: "auto",
-        position: "relative",
-      }}
-      onCopy={(e) => {
-        if (!isAdmin) {
+    // Ctrl+Wheel zoom
+    useEffect(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      const handleWheel = (e: WheelEvent) => {
+        if (e.ctrlKey || e.metaKey) {
           e.preventDefault();
+          setScale((prev) => Math.max(0.5, Math.min(3, prev + (e.deltaY > 0 ? -0.1 : 0.1))));
         }
-      }}
-    >
-      {/* Mobile-First Responsive Toolbar */}
-      <div
-        className="bg-[#1a1614] border-b border-[#3d342d] flex items-center justify-between gap-2 sm:gap-4 p-2 sm:p-3 sticky top-0 z-10"
-        style={{ flexShrink: 0 }}
-      >
-        {/* Mobile: Menu button, Desktop: Navigation */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-1 sm:flex-none">
-          {/* Mobile menu button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowMobileMenu(!showMobileMenu)}
-            className="text-[#f5f1eb] hover:bg-[#3d342d] sm:hidden p-2"
-            aria-label="Menu"
-          >
-            <Menu className="w-4 h-4" />
-          </Button>
-        </div>
+      };
+      el.addEventListener("wheel", handleWheel, { passive: false });
+      return () => el.removeEventListener("wheel", handleWheel);
+    }, []);
 
-        {/* Zoom and Fullscreen - Hidden on mobile, shown in menu */}
-        <div className={`${showMobileMenu ? "flex" : "hidden"} sm:flex items-center gap-1 sm:gap-2 flex-col sm:flex-row absolute sm:relative top-full sm:top-auto left-0 right-0 sm:left-auto sm:right-auto bg-[#1a1614] sm:bg-transparent border-b sm:border-b-0 border-[#3d342d] p-2 sm:p-0 z-10`}>
-          <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={zoomOut}
-              className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2 flex-1 sm:flex-none"
-              title="Zoom Out (Ctrl+Scroll)"
-              aria-label="Zoom Out"
-            >
-              <ZoomOut className="w-4 h-4" />
-            </Button>
-            <span className="text-xs sm:text-sm text-[#a89a8e] px-2 whitespace-nowrap min-w-[3rem] sm:min-w-0 text-center">
-              {Math.round(scale * 100)}%
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={zoomIn}
-              className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2 flex-1 sm:flex-none"
-              title="Zoom In (Ctrl+Scroll)"
-              aria-label="Zoom In"
-            >
-              <ZoomIn className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={resetZoom}
-              className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2"
-              title="Reset Zoom"
-              aria-label="Reset Zoom"
-            >
-              <RotateCcw className="w-4 h-4" />
-            </Button>
+    // Pinch-to-zoom
+    useEffect(() => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      let initialDistance = 0;
+      let initialScale = scaleRef.current;
+      const onTouchStart = (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          initialScale = scaleRef.current;
+        }
+      };
+      const onTouchMove = (e: TouchEvent) => {
+        if (e.touches.length === 2) {
+          e.preventDefault();
+          const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+          setScale(Math.max(0.5, Math.min(3, initialScale * (dist / initialDistance))));
+        }
+      };
+      el.addEventListener("touchstart", onTouchStart, { passive: true });
+      el.addEventListener("touchmove", onTouchMove, { passive: false });
+      return () => { el.removeEventListener("touchstart", onTouchStart); el.removeEventListener("touchmove", onTouchMove); };
+    }, []);
+
+    // Scroll-based page tracking
+    useEffect(() => {
+      const el = scrollContainerRef.current;
+      if (!el || numPages === 0) return;
+      const handleScroll = () => {
+        const pageHeight = el.scrollHeight / numPages;
+        const currentPage = Math.floor(el.scrollTop / pageHeight) + 1;
+        if (currentPage >= 1 && currentPage <= numPages) {
+          onPageChangeRef.current?.(currentPage);
+        }
+      };
+      el.addEventListener("scroll", handleScroll, { passive: true });
+      return () => el.removeEventListener("scroll", handleScroll);
+    }, [numPages]);
+
+    if (loading && !pdfDoc) {
+      return (
+        <div className="flex items-center justify-center h-full">
+          <div className="text-center px-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#5a4d42] border-t-[#c4a882] mx-auto mb-3" />
+            <p className="text-[#8a7d72] text-sm">Loading PDF...</p>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleFullscreen}
-            className="text-[#f5f1eb] hover:bg-[#3d342d] p-2 sm:p-2 w-full sm:w-auto"
-            title="Fullscreen"
-            aria-label="Fullscreen"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </Button>
         </div>
-      </div>
+      );
+    }
 
-      {/* Scrollable PDF Pages Container */}
+    if (error) {
+      return (
+        <div className="flex items-center justify-center h-full px-4">
+          <div className="text-center max-w-sm">
+            <p className="text-red-400 mb-4 text-sm">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-[#3d342d] hover:bg-[#4d433b] text-[#e8ddd0] text-sm rounded-lg transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
       <div
-        className="flex-1 overflow-auto bg-[#2d2520]"
+        ref={scrollContainerRef}
+        className={!isAdmin ? "secure-pdf-viewer--restricted" : ""}
         style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          padding: "16px 8px",
+          height: "100%",
+          width: "100%",
+          overflow: "auto",
           WebkitOverflowScrolling: "touch",
+          userSelect: isAdmin ? "auto" : "none",
         }}
+        onCopy={(e) => { if (!isAdmin) e.preventDefault(); }}
       >
-        {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
-          <div
-            key={pageNum}
-            data-page={pageNum}
-            className="mb-4"
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              width: "100%",
-            }}
-          >
-            <canvas
-              ref={(el) => {
-                if (el) {
-                  canvasRefs.current.set(pageNum, el);
-                } else {
-                  canvasRefs.current.delete(pageNum);
-                }
-              }}
-              className="shadow-2xl"
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-                userSelect: isAdmin ? "auto" : "none",
-                touchAction: "pan-y pinch-zoom",
-                display: "block",
-              }}
-            />
-          </div>
-        ))}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "12px 4px", gap: "8px" }}>
+          {Array.from({ length: numPages }, (_, i) => i + 1).map((pageNum) => (
+            <div key={pageNum} data-page={pageNum} style={{ display: "flex", justifyContent: "center", width: "100%" }}>
+              <canvas
+                ref={(el) => { if (el) canvasRefs.current.set(pageNum, el); else canvasRefs.current.delete(pageNum); }}
+                style={{
+                  maxWidth: "100%",
+                  height: "auto",
+                  display: "block",
+                  borderRadius: "2px",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                  userSelect: isAdmin ? "auto" : "none",
+                  touchAction: "pan-y pinch-zoom",
+                }}
+              />
+            </div>
+          ))}
+        </div>
+
+        <style jsx global>{`
+          .secure-pdf-viewer--restricted {
+            -webkit-user-select: none !important;
+            user-select: none !important;
+          }
+          .secure-pdf-viewer--restricted canvas {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+            pointer-events: auto;
+          }
+          canvas {
+            image-rendering: auto;
+            -webkit-font-smoothing: antialiased;
+          }
+        `}</style>
       </div>
+    );
+  }
+);
 
-      {/* Security styles */}
-      <style jsx global>{`
-        .secure-pdf-viewer--restricted canvas {
-          pointer-events: auto; /* Allow swipes but prevent selection */
-        }
-        
-        .secure-pdf-viewer--restricted {
-          -webkit-user-select: none !important;
-          -moz-user-select: none !important;
-          -ms-user-select: none !important;
-          user-select: none !important;
-        }
-
-        /* Prevent text selection on canvas */
-        .secure-pdf-viewer--restricted canvas {
-          -webkit-touch-callout: none;
-          -webkit-user-select: none;
-          -khtml-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
-
-        /* Smooth rendering */
-        canvas {
-          image-rendering: -webkit-optimize-contrast;
-          image-rendering: crisp-edges;
-        }
-      `}</style>
-    </div>
-  );
-}
+export default SecurePdfViewer;

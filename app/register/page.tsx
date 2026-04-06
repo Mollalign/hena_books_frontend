@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -19,31 +19,46 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { authService } from "@/lib/services/auth";
+import { useAuth } from "@/context/AuthContext";
 
-const registerSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters"),
+    email: z.string().email("Invalid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string(),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 export default function RegisterPage() {
-  const router = useRouter();
+  return (
+    <Suspense>
+      <RegisterForm />
+    </Suspense>
+  );
+}
+
+function RegisterForm() {
+  const { login } = useAuth();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("from") || undefined;
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-      confirmPassword: "",
-    },
+    defaultValues: { name: "", email: "", password: "", confirmPassword: "" },
   });
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
@@ -54,13 +69,11 @@ export default function RegisterPage() {
         password: values.password,
         name: values.name,
       });
-
-      toast.success("Account created successfully! Please sign in.");
-      router.push("/login");
+      await login(values.email, values.password, redirectTo);
     } catch (error: any) {
-      console.error("Registration failed:", error);
       toast.error(
-        error.response?.data?.detail || "Registration failed. Please try again."
+        error.response?.data?.detail ||
+          "Registration failed. Please try again."
       );
     } finally {
       setIsLoading(false);
@@ -68,41 +81,35 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[var(--primary-50)] via-background to-[var(--accent-50)] py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background decoration */}
+    <div className="min-h-dvh flex items-center justify-center bg-gradient-to-br from-navy-50 via-background to-gold-50 p-4 relative overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <div className="absolute top-20 left-10 w-72 h-72 bg-[var(--primary-500)]/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-10 w-96 h-96 bg-[var(--accent-500)]/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
+        <div className="absolute top-20 left-10 w-72 h-72 bg-navy-500/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-10 w-72 h-72 bg-gold-500/10 rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
       </div>
 
-      <Card className="w-full max-w-md shadow-2xl border-[var(--border)] bg-card/95 backdrop-blur-sm relative z-10">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-700)] flex items-center justify-center mb-4">
-            <BookOpen className="w-8 h-8 text-white" />
+      <Card className="w-full max-w-md shadow-2xl border-border bg-card/95 backdrop-blur-sm relative z-10">
+        <CardHeader className="space-y-1 text-center pb-4">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-navy-gradient flex items-center justify-center mb-3">
+            <BookOpen className="w-7 h-7 text-white" />
           </div>
-          <CardTitle className="text-3xl font-bold">Create Account</CardTitle>
-          <CardDescription className="text-base">
+          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+          <CardDescription>
             Join Hena Books to start your reading journey
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <User className="w-4 h-4" />
-                      Full Name
+                      <User className="w-4 h-4" /> Full Name
                     </FormLabel>
                     <FormControl>
-                      <Input 
-                        placeholder="John Doe" 
-                        className="h-11"
-                        {...field} 
-                      />
+                      <Input placeholder="henok tesfaye" className="h-12 text-base" autoComplete="name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -114,16 +121,10 @@ export default function RegisterPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Mail className="w-4 h-4" />
-                      Email Address
+                      <Mail className="w-4 h-4" /> Email
                     </FormLabel>
                     <FormControl>
-                      <Input 
-                        type="email" 
-                        placeholder="you@example.com" 
-                        className="h-11"
-                        {...field} 
-                      />
+                      <Input type="email" placeholder="henoktesfaye@gmail.com" className="h-12 text-base" autoComplete="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -135,21 +136,13 @@ export default function RegisterPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
-                      Password
+                      <Lock className="w-4 h-4" /> Password
                     </FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="h-11"
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="••••••••" className="h-12 text-base" autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormMessage />
-                    <p className="text-xs text-muted-foreground">
-                      Must be at least 6 characters
-                    </p>
+                    <p className="text-xs text-muted-foreground">At least 6 characters</p>
                   </FormItem>
                 )}
               />
@@ -159,24 +152,18 @@ export default function RegisterPage() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="flex items-center gap-2">
-                      <Lock className="w-4 h-4" />
-                      Confirm Password
+                      <Lock className="w-4 h-4" /> Confirm Password
                     </FormLabel>
                     <FormControl>
-                      <Input 
-                        type="password" 
-                        placeholder="••••••••" 
-                        className="h-11"
-                        {...field} 
-                      />
+                      <Input type="password" placeholder="••••••••" className="h-12 text-base" autoComplete="new-password" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button 
-                type="submit" 
-                className="w-full h-11 text-base font-semibold bg-gradient-to-r from-[var(--primary-600)] to-[var(--primary-700)] hover:from-[var(--primary-700)] hover:to-[var(--primary-800)]" 
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-semibold bg-navy-gradient text-white"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -191,24 +178,16 @@ export default function RegisterPage() {
             </form>
           </Form>
         </CardContent>
-        <CardFooter className="flex flex-col space-y-4">
-          <div className="text-sm text-center text-muted-foreground">
+        <CardFooter className="flex flex-col gap-3 pt-2">
+          <p className="text-sm text-center text-muted-foreground">
             Already have an account?{" "}
-            <Link 
-              href="/login" 
-              className="text-[var(--primary-600)] hover:underline font-semibold"
-            >
+            <Link href={redirectTo ? `/login?from=${encodeURIComponent(redirectTo)}` : "/login"} className="text-navy-500 hover:underline font-semibold">
               Sign in
             </Link>
-          </div>
-          <div className="text-sm text-center">
-            <Link 
-              href="/" 
-              className="text-muted-foreground hover:text-foreground transition-colors"
-            >
-              ← Back to Home
-            </Link>
-          </div>
+          </p>
+          <Link href="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+            &larr; Back to Home
+          </Link>
         </CardFooter>
       </Card>
     </div>

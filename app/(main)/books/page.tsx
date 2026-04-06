@@ -1,0 +1,70 @@
+"use client";
+
+import { useEffect } from "react";
+import Link from "next/link";
+import { BookOpen, ArrowLeft } from "lucide-react";
+import { useBooks } from "@/hooks/use-books";
+import BookCard from "@/components/books/BookCard";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
+import { useLanguage } from "@/context/LanguageContext";
+
+export default function BooksPage() {
+  const { language } = useLanguage();
+  const { data, isLoading: loading, error } = useBooks({ page: 1, per_page: 50 });
+  const books = data?.books ?? [];
+
+  useEffect(() => {
+    if (error) toast.error(language === "am" ? "መጽሐፍትን መጫን አልተቻለም ።" : "Failed to load books.");
+  }, [error, language]);
+
+  return (
+    <div className="pb-12 sm:pb-16 relative">
+      <div className="container mx-auto px-4 relative z-10">
+        <div className="pt-4 mb-3">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-navy-50 dark:hover:bg-navy-950 transition-all group"
+          >
+            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+            {language === "am" ? "መነሻ" : "Home"}
+          </Link>
+        </div>
+
+        <div className="text-center mb-8 sm:mb-12">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
+            {language === "am" ? "መጽሐፉን እዚህ ያገኙታል" : "You will find the book here"}
+          </h1>
+        </div>
+
+        {loading ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 max-w-4xl mx-auto">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="rounded-2xl overflow-hidden border border-border bg-background">
+                <Skeleton className="aspect-[3/4] w-full rounded-none" />
+                <div className="p-3 sm:p-4 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/2" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : books.length > 0 ? (
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-5 max-w-4xl mx-auto">
+            {books.map((book) => (
+              <BookCard key={book.id} book={book} />
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-16 max-w-sm mx-auto">
+            <div className="w-16 h-16 mx-auto bg-navy-gradient rounded-2xl flex items-center justify-center shadow-lg mb-5">
+              <BookOpen className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">{language === "am" ? "መጽሐፉ አልተገኘም" : "No books found"}</h3>
+            <p className="text-muted-foreground">{language === "am" ? "በቅርብ ይመለሱ" : "Check back soon"}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
