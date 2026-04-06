@@ -42,7 +42,7 @@ export default function AboutSection() {
           <h3 className="text-lg font-bold mb-1">ሄኖክ ተስፋዬ ደቸሬ</h3>
           <div className="space-y-1 text-sm text-foreground/60 mb-5">
             <p>በዲላ አማኑኤል ሕብረት ቤተክርስቲያን የወንጌል ሥርጭት አገልጋይ ።</p>
-            <p>በአሁኑ ጊዜ የሐዋሳ ዩኒቨርስቲ ተማሪ ነዉ ።</p>
+            <p>በአሁኑ ጊዜ የሐዋሳ ዩኒቨርስቲ ተማሪ ነው ።</p>
             <p>በሐዋሳ ዩኒቨርስቲ( HU-Fello ) Evang team ያገለግላል ።</p>
           </div>
 

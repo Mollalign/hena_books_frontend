@@ -33,7 +33,7 @@ export default function MissionSection() {
             ዓላማችን
           </h2>
           <p className="text-lg sm:text-xl font-semibold mb-6 text-foreground/80">
-            የእግዚአብሔርን በጎነት ለሁሉም መናገር ነዉ ።
+            የእግዚአብሔርን በጎነት ለሁሉም መናገር ነው ።
           </p>
 
           <blockquote className="relative p-6 rounded-2xl bg-muted/40 border border-border mb-8">
@@ -46,9 +46,7 @@ export default function MissionSection() {
             </cite>
           </blockquote>
 
-          <p className="text-sm sm:text-base text-foreground/60 mb-8 max-w-xl mx-auto">
-            ይህ አገልግሎት ለመጽሐፍ ቅዱስ ታማኝ ሆኖ የእግዚአብሔርን በጎነት ለሁሉም መናገር ይፈልጋል ።
-          </p>
+
 
           <div className="flex flex-wrap justify-center gap-3 mb-10">
             {highlights.map((h) => (

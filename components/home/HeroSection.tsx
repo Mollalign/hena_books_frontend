@@ -22,9 +22,8 @@ export default function HeroSection({ stats }: Props) {
 
       <div className="container mx-auto px-4 relative z-10">
         <div
-          className={`max-w-3xl mx-auto text-center transition-all duration-700 ${
-            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
-          }`}
+          className={`max-w-3xl mx-auto text-center transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+            }`}
         >
           {/* Logo */}
           <div className="flex justify-center mb-6">
@@ -46,7 +45,7 @@ export default function HeroSection({ stats }: Props) {
           </h1>
 
           <p className="text-base sm:text-lg text-foreground/70 max-w-xl mx-auto mb-3 leading-relaxed">
-            &ldquo;እግዚአብሔር ፍቅር ነዉ&rdquo; የተሰኘዉን መጽሐፍ ለማንበብ እንኳን በደኅና መጡ ።
+            &ldquo;እግዚአብሔር ፍቅር ነው&rdquo; የተሰኘውን መጽሐፍ ለማንበብ እንኳን በደኅና መጡ ።
           </p>
           <p className="text-sm sm:text-base text-foreground/60 max-w-lg mx-auto mb-8">
             የብፁዕ ሄኖክ ተስፋዬ የጽሑፍ ሥራ እዚህ ይገኛል ።
@@ -66,7 +65,7 @@ export default function HeroSection({ stats }: Props) {
               className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl text-base font-semibold border-2 border-border hover:border-navy-300 hover:bg-navy-50 dark:hover:bg-navy-950 transition-all active:scale-[0.97]"
             >
               <Sparkles className="w-5 h-5 text-gold-500" />
-              አካዉንት ይፍጠሩ
+              አካውንት ይፍጠሩ
             </Link>
           </div>
 

@@ -34,10 +34,10 @@ export default function FeaturesGrid() {
             <span className="text-sm font-semibold">HenaBooks ለምን?</span>
           </div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-3">
-            ለሁሉም የተገነባ ነዉ ።
+            ለሁሉም የተገነባ ነው ።
           </h2>
           <p className="text-foreground/60 max-w-lg mx-auto">
-            የእግዚአብሔርን በጎነት እንድናዉቅ ይገባናል ።
+            የእግዚአብሔርን በጎነት እንድናውቅ ይገባናል ።
           </p>
         </div>
 
