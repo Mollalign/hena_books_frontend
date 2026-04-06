@@ -35,7 +35,7 @@ export default function DailyVerse() {
               </div>
               <div className="text-center sm:text-left flex-1">
                 <p className="text-xs font-medium text-white/60 uppercase tracking-wider mb-2">
-                  {language === "am" ? "የዛሬ ቅዱስ ቃል" : "Daily Verse"}
+                  {language === "am" ? "Daily Verse" : "Daily Verse"}
                 </p>
                 <blockquote className="text-lg sm:text-xl md:text-2xl text-white font-medium leading-relaxed mb-3 italic">
                   &ldquo;{verse.text}&rdquo;
