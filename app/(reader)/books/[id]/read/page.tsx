@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, AlertCircle, Maximize, Minimize, Download, Loader2, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { booksService } from "@/lib/services/books";
@@ -34,6 +34,10 @@ export default function BookReaderPage() {
   const sessionIdRef = useRef<string | number | null>(null);
 
   const isAdmin = user?.role === "admin";
+
+  const handleScaleChange = useCallback((s: number) => {
+    setCurrentScale(Math.round(s * 100));
+  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -115,9 +119,9 @@ export default function BookReaderPage() {
       const time = readingTimeRef.current;
       const page = currentPageRef.current;
       if (sid) {
-        analyticsService.endSession(sid).catch(() => {});
+        analyticsService.endSession(sid).catch(() => { });
         if (time > 0) {
-          analyticsService.updateProgress(sid, { last_page_read: page, time_spent_seconds: time }).catch(() => {});
+          analyticsService.updateProgress(sid, { last_page_read: page, time_spent_seconds: time }).catch(() => { });
         }
       }
     };
@@ -125,7 +129,7 @@ export default function BookReaderPage() {
 
   useEffect(() => {
     if (sessionId && readingTime > 0 && readingTime % 30 === 0) {
-      analyticsService.updateProgress(sessionId, { last_page_read: currentPage, time_spent_seconds: 30 }).catch(() => {});
+      analyticsService.updateProgress(sessionId, { last_page_read: currentPage, time_spent_seconds: 30 }).catch(() => { });
     }
   }, [sessionId, readingTime, currentPage]);
 
@@ -133,7 +137,7 @@ export default function BookReaderPage() {
     try {
       if (!isFullscreen) await containerRef.current?.requestFullscreen();
       else await document.exitFullscreen();
-    } catch {}
+    } catch { }
   };
 
   useEffect(() => {
@@ -274,9 +278,9 @@ export default function BookReaderPage() {
               pdfUrl={pdfUrl}
               title={bookData.title}
               isAdmin={isAdmin}
-              onPageChange={(p: number) => setCurrentPage(p)}
-              onScaleChange={(s: number) => setCurrentScale(Math.round(s * 100))}
-              onLoadComplete={(n: number) => setTotalPages(n)}
+              onPageChange={setCurrentPage}
+              onScaleChange={handleScaleChange}
+              onLoadComplete={setTotalPages}
             />
           </Suspense>
         ) : (

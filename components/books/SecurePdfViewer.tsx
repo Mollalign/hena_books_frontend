@@ -26,10 +26,26 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
     const [scale, setScale] = useState(1.0);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [renderedPages, setRenderedPages] = useState<Set<number>>(new Set());
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const canvasRefs = useRef<Map<number, HTMLCanvasElement>>(new Map());
     const renderTasksRef = useRef<Map<number, any>>(new Map());
+    const renderedPagesRef = useRef<Set<number>>(new Set());
+    const scaleRef = useRef(scale);
+
+    // Store callback props in refs to avoid infinite re-render loops
+    // (parent passes inline arrows that change identity every render)
+    const onPageChangeRef = useRef(onPageChange);
+    const onScaleChangeRef = useRef(onScaleChange);
+    const onLoadCompleteRef = useRef(onLoadComplete);
+    onPageChangeRef.current = onPageChange;
+    onScaleChangeRef.current = onScaleChange;
+    onLoadCompleteRef.current = onLoadComplete;
+
+    // Keep scale ref in sync
+    useEffect(() => {
+      scaleRef.current = scale;
+      onScaleChangeRef.current?.(scale);
+    }, [scale]);
 
     const calculateInitialScale = useCallback(() => {
       if (typeof window === "undefined") return 1.0;
@@ -45,13 +61,10 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       zoomIn: () => setScale((prev) => Math.min(prev + 0.25, 3)),
       zoomOut: () => setScale((prev) => Math.max(prev - 0.25, 0.5)),
       resetZoom: () => setScale(calculateInitialScale()),
-      getScale: () => scale,
-    }), [scale, calculateInitialScale]);
+      getScale: () => scaleRef.current,
+    }), [calculateInitialScale]);
 
-    useEffect(() => {
-      onScaleChange?.(scale);
-    }, [scale, onScaleChange]);
-
+    // Load PDF.js library
     useEffect(() => {
       const loadPdfJs = async () => {
         if (typeof window === "undefined") return;
@@ -86,14 +99,18 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       loadPdfJs();
     }, [calculateInitialScale]);
 
+    // Handle window resize
     useEffect(() => {
       const handleResize = () => setScale(calculateInitialScale());
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }, [calculateInitialScale]);
 
+    // Load the PDF document (no callback props in deps!)
     useEffect(() => {
       if (!isMounted || !pdfUrl) return;
+
+      let cancelled = false;
 
       const loadPdf = async () => {
         try {
@@ -108,11 +125,14 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
           const arrayBuffer = await response.arrayBuffer();
           const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
 
+          if (cancelled) return;
+
           setPdfDoc(pdf);
           setNumPages(pdf.numPages);
-          onLoadComplete?.(pdf.numPages);
+          onLoadCompleteRef.current?.(pdf.numPages);
           setLoading(false);
         } catch (err: any) {
+          if (cancelled) return;
           console.error("Error loading PDF:", err);
           setError(err.message || "Failed to load PDF");
           setLoading(false);
@@ -120,78 +140,108 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       };
 
       loadPdf();
-    }, [isMounted, pdfUrl, onLoadComplete]);
 
-    const renderPage = useCallback(async (pageNumber: number) => {
-      if (!pdfDoc || renderedPages.has(pageNumber)) return;
+      return () => { cancelled = true; };
+    }, [isMounted, pdfUrl]);
+
+    // Render a single page — no state dependencies that could cause loops
+    const renderPage = useCallback(async (pageNumber: number, targetScale: number) => {
+      if (!pdfDoc) return;
+      if (renderedPagesRef.current.has(pageNumber)) return;
 
       const canvas = canvasRefs.current.get(pageNumber);
       if (!canvas) return;
 
+      // Mark as rendering to prevent duplicate calls
+      renderedPagesRef.current.add(pageNumber);
+
       try {
         const page = await pdfDoc.getPage(pageNumber);
+
+        // Check if scale changed while we were waiting
+        if (scaleRef.current !== targetScale) {
+          renderedPagesRef.current.delete(pageNumber);
+          return;
+        }
+
         const context = canvas.getContext("2d", { alpha: false });
-        if (!context) return;
+        if (!context) {
+          renderedPagesRef.current.delete(pageNumber);
+          return;
+        }
 
+        // Cancel any previous render task for this page
         const existingTask = renderTasksRef.current.get(pageNumber);
-        if (existingTask) existingTask.cancel();
+        if (existingTask) {
+          try { existingTask.cancel(); } catch { }
+        }
 
-        const viewport = page.getViewport({ scale });
-        const dpr = window.devicePixelRatio || 1;
+        const viewport = page.getViewport({ scale: targetScale });
+        const dpr = Math.max(window.devicePixelRatio || 1, 2);
 
-        canvas.width = viewport.width * dpr;
-        canvas.height = viewport.height * dpr;
+        // Set canvas to high-res dimensions
+        canvas.width = Math.floor(viewport.width * dpr);
+        canvas.height = Math.floor(viewport.height * dpr);
         canvas.style.width = `${viewport.width}px`;
         canvas.style.height = `${viewport.height}px`;
 
-        context.scale(dpr, dpr);
-
-        const renderTask = page.render({ canvasContext: context, viewport });
+        // Render at full high-res resolution
+        const renderViewport = page.getViewport({ scale: targetScale * dpr });
+        const renderTask = page.render({ canvasContext: context, viewport: renderViewport });
         renderTasksRef.current.set(pageNumber, renderTask);
         await renderTask.promise;
-
-        setRenderedPages((prev) => new Set([...prev, pageNumber]));
       } catch (err: any) {
+        renderedPagesRef.current.delete(pageNumber);
         if (err.name !== "RenderingCancelledException") {
           console.error(`Error rendering page ${pageNumber}:`, err);
         }
       }
-    }, [pdfDoc, scale, renderedPages]);
+    }, [pdfDoc]);
 
+    // Render all pages when PDF loads or scale changes
     useEffect(() => {
       if (!pdfDoc || numPages === 0) return;
-      for (let i = 1; i <= numPages; i++) {
-        if (!renderedPages.has(i)) renderPage(i);
-      }
-    }, [pdfDoc, numPages, scale, renderPage, renderedPages]);
 
-    useEffect(() => {
-      if (!pdfDoc || numPages === 0) return;
-      setRenderedPages(new Set());
+      const currentScale = scale;
+
+      // Cancel all in-flight tasks
+      renderTasksRef.current.forEach((task) => {
+        try { task.cancel(); } catch { }
+      });
       renderTasksRef.current.clear();
-      setTimeout(() => {
-        for (let i = 1; i <= numPages; i++) renderPage(i);
-      }, 100);
-    }, [scale]);
+      renderedPagesRef.current.clear();
 
+      // Render pages
+      for (let i = 1; i <= numPages; i++) {
+        renderPage(i, currentScale);
+      }
+    }, [pdfDoc, numPages, scale, renderPage]);
+
+    // IntersectionObserver for lazy loading off-screen pages
     useEffect(() => {
       if (!pdfDoc || numPages === 0) return;
+
+      const currentScale = scale;
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               const pageNum = parseInt(entry.target.getAttribute("data-page") || "0");
-              if (pageNum > 0 && !renderedPages.has(pageNum)) renderPage(pageNum);
+              if (pageNum > 0 && !renderedPagesRef.current.has(pageNum)) {
+                renderPage(pageNum, currentScale);
+              }
             }
           });
         },
         { rootMargin: "200px" }
       );
+
       const pageElements = document.querySelectorAll("[data-page]");
       pageElements.forEach((el) => observer.observe(el));
       return () => observer.disconnect();
-    }, [pdfDoc, numPages, renderedPages, renderPage]);
+    }, [pdfDoc, numPages, scale, renderPage]);
 
+    // Security: prevent right-click and keyboard shortcuts
     useEffect(() => {
       const handler = (e: MouseEvent) => { if (!isAdmin) { e.preventDefault(); return false; } };
       const keyHandler = (e: KeyboardEvent) => {
@@ -205,6 +255,7 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       return () => { document.removeEventListener("contextmenu", handler); document.removeEventListener("keydown", keyHandler); };
     }, [isAdmin]);
 
+    // Ctrl+Wheel zoom
     useEffect(() => {
       const el = scrollContainerRef.current;
       if (!el) return;
@@ -218,15 +269,16 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       return () => el.removeEventListener("wheel", handleWheel);
     }, []);
 
+    // Pinch-to-zoom
     useEffect(() => {
       const el = scrollContainerRef.current;
       if (!el) return;
       let initialDistance = 0;
-      let initialScale = scale;
+      let initialScale = scaleRef.current;
       const onTouchStart = (e: TouchEvent) => {
         if (e.touches.length === 2) {
           initialDistance = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-          initialScale = scale;
+          initialScale = scaleRef.current;
         }
       };
       const onTouchMove = (e: TouchEvent) => {
@@ -239,19 +291,22 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       el.addEventListener("touchstart", onTouchStart, { passive: true });
       el.addEventListener("touchmove", onTouchMove, { passive: false });
       return () => { el.removeEventListener("touchstart", onTouchStart); el.removeEventListener("touchmove", onTouchMove); };
-    }, [scale]);
+    }, []);
 
+    // Scroll-based page tracking
     useEffect(() => {
       const el = scrollContainerRef.current;
-      if (!el || !onPageChange || numPages === 0) return;
+      if (!el || numPages === 0) return;
       const handleScroll = () => {
         const pageHeight = el.scrollHeight / numPages;
         const currentPage = Math.floor(el.scrollTop / pageHeight) + 1;
-        if (currentPage >= 1 && currentPage <= numPages) onPageChange(currentPage);
+        if (currentPage >= 1 && currentPage <= numPages) {
+          onPageChangeRef.current?.(currentPage);
+        }
       };
       el.addEventListener("scroll", handleScroll, { passive: true });
       return () => el.removeEventListener("scroll", handleScroll);
-    }, [numPages, onPageChange]);
+    }, [numPages]);
 
     if (loading && !pdfDoc) {
       return (
@@ -324,8 +379,8 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
             pointer-events: auto;
           }
           canvas {
-            image-rendering: -webkit-optimize-contrast;
-            image-rendering: crisp-edges;
+            image-rendering: auto;
+            -webkit-font-smoothing: antialiased;
           }
         `}</style>
       </div>
