@@ -1,24 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { BookOpen, ArrowRight, User, BookText } from "lucide-react";
-import { booksService, Book, getCategoryLabel } from "@/lib/services/books";
+import { type Book, getCategoryLabel } from "@/lib/services/books";
+import { useBooks } from "@/hooks/use-books";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function BookSpotlight() {
   const { language } = useLanguage();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    booksService
-      .getBooks({ page: 1, per_page: 6 })
-      .then((res) => setBooks(res.books))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, []);
+  const { data, isLoading: loading } = useBooks({ page: 1, per_page: 6 });
+  const books = data?.books ?? [];
 
   if (loading) {
     return (

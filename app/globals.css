@@ -197,9 +197,9 @@ html, body {
   --radius-4xl: calc(var(--radius) + 16px);
 
   /* Fonts */
-  --font-sans: 'Plus Jakarta Sans', 'Noto Sans Ethiopic', system-ui, sans-serif;
-  --font-serif: 'Outfit', 'Noto Sans Ethiopic', system-ui, sans-serif;
-  --font-heading: 'Outfit', 'Noto Sans Ethiopic', system-ui, sans-serif;
+  --font-sans: var(--font-plus-jakarta), var(--font-noto-ethiopic), system-ui, sans-serif;
+  --font-serif: var(--font-outfit), var(--font-noto-ethiopic), system-ui, sans-serif;
+  --font-heading: var(--font-outfit), var(--font-noto-ethiopic), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
 }
 

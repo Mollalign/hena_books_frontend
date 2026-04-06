@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return errorResponse("Invalid email or password", 401);
     }
 
-    const { accessToken, refreshToken } = await createTokens(user.id);
+    const { accessToken, refreshToken } = await createTokens(user.id, user.role);
 
     const response = jsonResponse({
       user: {

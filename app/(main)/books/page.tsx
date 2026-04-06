@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { BookOpen, ArrowLeft } from "lucide-react";
-import { booksService, Book } from "@/lib/services/books";
+import { useBooks } from "@/hooks/use-books";
 import BookCard from "@/components/books/BookCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -11,16 +11,12 @@ import { useLanguage } from "@/context/LanguageContext";
 
 export default function BooksPage() {
   const { language } = useLanguage();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data, isLoading: loading, error } = useBooks({ page: 1, per_page: 50 });
+  const books = data?.books ?? [];
 
   useEffect(() => {
-    booksService
-      .getBooks({ page: 1, per_page: 50 })
-      .then((res) => setBooks(res.books))
-      .catch(() => toast.error(language === "am" ? "መጽሐፍትን መጫን አልተቻለም ።" : "Failed to load books."))
-      .finally(() => setLoading(false));
-  }, []);
+    if (error) toast.error(language === "am" ? "መጽሐፍትን መጫን አልተቻለም ።" : "Failed to load books.");
+  }, [error, language]);
 
   return (
     <div className="pb-12 sm:pb-16 relative">

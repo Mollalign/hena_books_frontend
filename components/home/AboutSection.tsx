@@ -34,13 +34,13 @@ export default function AboutSection() {
             {language === "am" ? "ስለ ጸሐፊው" : "About the Author"}
           </h2>
 
-          <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-3 border-navy-300 dark:border-navy-700 shadow-xl mx-auto mb-4">
+          <div className="mx-auto mb-4 w-fit">
             <Image
               src="/hena.jpg"
               alt="ሄኖክ ተስፋዬ ደቸሬ"
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 112px, 144px"
+              width={144}
+              height={144}
+              className="w-28 h-28 sm:w-36 sm:h-36 rounded-full object-cover border-4 border-navy-300 dark:border-navy-700 shadow-xl"
             />
           </div>
 

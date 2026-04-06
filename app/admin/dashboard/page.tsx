@@ -1,28 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import {
   Users, BookOpen, Clock, TrendingUp, BookText,
   Sparkles, Activity, Eye, BarChart3,
 } from "lucide-react";
-import { analyticsService, OverviewStats } from "@/lib/services/analytics";
+import { useOverviewStats } from "@/hooks/use-analytics";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
 import Image from "next/image";
 import Link from "next/link";
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<OverviewStats | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    analyticsService
-      .getOverviewStats()
-      .then(setStats)
-      .catch(() => toast.error("Failed to load dashboard statistics"))
-      .finally(() => setLoading(false));
-  }, []);
+  const { data: stats = null, isLoading: loading } = useOverviewStats();
 
   const statCards = [
     { title: "Users", value: stats?.total_users || 0, icon: Users, color: "navy" },

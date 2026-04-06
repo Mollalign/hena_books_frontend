@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { BookOpen, ArrowRight, User, Star, Clock } from "lucide-react";
+import { BookOpen, ArrowRight, User, Star } from "lucide-react";
 import { Book, getCategoryLabel } from "@/lib/services/books";
 
 export default function BookCard({ book }: { book: Book }) {

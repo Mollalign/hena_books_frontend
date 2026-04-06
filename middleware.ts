@@ -11,6 +11,7 @@ function getSecretKey(): Uint8Array {
 interface TokenPayload {
   sub: string;
   type: string;
+  role?: string;
   exp?: number;
 }
 
@@ -58,16 +59,8 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    if (pathname.startsWith("/admin")) {
-      const { prisma } = await import("@/lib/db");
-      const user = await prisma.user.findUnique({
-        where: { id: payload.sub },
-        select: { role: true, is_active: true },
-      });
-
-      if (!user || !user.is_active || user.role !== "ADMIN") {
-        return NextResponse.redirect(new URL("/", request.url));
-      }
+    if (pathname.startsWith("/admin") && payload.role !== "ADMIN") {
+      return NextResponse.redirect(new URL("/", request.url));
     }
   }
 

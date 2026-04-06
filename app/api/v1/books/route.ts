@@ -39,12 +39,14 @@ export async function GET(request: NextRequest) {
       prisma.book.count({ where }),
     ]);
 
-    return jsonResponse({
+    const response = jsonResponse({
       books,
       total,
       page: filters.page,
       per_page: filters.per_page,
     });
+    response.headers.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
+    return response;
   } catch (error) {
     return handleApiError(error);
   }

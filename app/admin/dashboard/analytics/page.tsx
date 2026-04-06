@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { analyticsService, BookStats, ReaderActivity } from "@/lib/services/analytics";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo } from "react";
+import { useBookStats, useReaderActivity } from "@/hooks/use-analytics";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -12,14 +12,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import Image from "next/image";
 import { 
   BarChart3, 
   BookOpen, 
   Users, 
   Clock, 
-  TrendingUp, 
   Activity,
   BookText,
   Eye,
@@ -29,40 +27,23 @@ import {
 } from "lucide-react";
 
 export default function AdminAnalyticsPage() {
-  const [bookStats, setBookStats] = useState<BookStats[]>([]);
-  const [readerActivity, setReaderActivity] = useState<ReaderActivity[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: bookStats = [], isLoading: booksLoading } = useBookStats();
+  const { data: readerActivity = [], isLoading: readersLoading } = useReaderActivity();
+  const loading = booksLoading || readersLoading;
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      const [books, readers] = await Promise.all([
-        analyticsService.getBookStats(),
-        analyticsService.getReaderActivity(),
-      ]);
-      setBookStats(books);
-      setReaderActivity(readers);
-    } catch (error: any) {
-      console.error("Failed to fetch analytics:", error);
-      toast.error("Failed to load analytics");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Calculate totals
-  const totals = {
+  const totals = useMemo(() => ({
     totalReaders: bookStats.reduce((sum, book) => sum + book.total_readers, 0),
     totalSessions: bookStats.reduce((sum, book) => sum + book.total_sessions, 0),
     totalHours: bookStats.reduce((sum, book) => sum + book.total_reading_time_hours, 0),
     avgPagesPerBook: bookStats.length > 0 
       ? bookStats.reduce((sum, book) => sum + book.average_pages_read, 0) / bookStats.length 
       : 0,
-  };
+  }), [bookStats]);
+
+  const maxReaders = useMemo(
+    () => Math.max(0, ...bookStats.map(b => b.total_readers)),
+    [bookStats]
+  );
 
   return (
     <div className="space-y-8 mt-12">
@@ -211,9 +192,7 @@ export default function AdminAnalyticsPage() {
                     </TableHeader>
                     <TableBody>
                       {bookStats.map((book, index) => {
-                        const maxReaders = Math.max(...bookStats.map(b => b.total_readers));
                         const performancePercent = maxReaders > 0 ? (book.total_readers / maxReaders) * 100 : 0;
-                        
                         return (
                           <TableRow key={book.book_id} className="hover:bg-[var(--muted)]/30">
                             <TableCell>

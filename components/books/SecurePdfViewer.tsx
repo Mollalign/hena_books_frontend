@@ -210,21 +210,21 @@ const SecurePdfViewer = forwardRef<PdfViewerHandle, SecurePdfViewerProps>(
       }
     }, [pdfDoc]);
 
-    // Render all pages when PDF loads or scale changes
+    // On scale change, clear rendered state so IntersectionObserver re-renders visible pages
     useEffect(() => {
       if (!pdfDoc || numPages === 0) return;
 
       const currentScale = scale;
 
-      // Cancel all in-flight tasks
       renderTasksRef.current.forEach((task) => {
         try { task.cancel(); } catch { }
       });
       renderTasksRef.current.clear();
       renderedPagesRef.current.clear();
 
-      // Render pages
-      for (let i = 1; i <= numPages; i++) {
+      // Only render the first few pages immediately; IntersectionObserver handles the rest
+      const initialPages = Math.min(3, numPages);
+      for (let i = 1; i <= initialPages; i++) {
         renderPage(i, currentScale);
       }
     }, [pdfDoc, numPages, scale, renderPage]);

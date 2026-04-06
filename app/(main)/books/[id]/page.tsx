@@ -1,11 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { BookOpen, Calendar, Users, Clock, ArrowLeft, BookText, User, Tag } from "lucide-react";
-import { booksService, BookDetail, getCategoryLabel } from "@/lib/services/books";
+import { getCategoryLabel } from "@/lib/services/books";
+import { useBook } from "@/hooks/use-books";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
@@ -17,22 +18,15 @@ export default function BookDetailPage() {
   const router = useRouter();
   const { user } = useAuth();
   const { language } = useLanguage();
-  const [book, setBook] = useState<BookDetail | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { data: book = null, isLoading: loading, error } = useBook(params.id as string);
   const t = (am: string, en: string) => language === "am" ? am : en;
 
   useEffect(() => {
-    if (!params.id) return;
-    setLoading(true);
-    booksService
-      .getBookById(params.id as string)
-      .then(setBook)
-      .catch(() => {
-        toast.error("Failed to load book details");
-        router.push("/books");
-      })
-      .finally(() => setLoading(false));
-  }, [params.id, router]);
+    if (error) {
+      toast.error("Failed to load book details");
+      router.push("/books");
+    }
+  }, [error, router]);
 
   const handleReadNow = () => {
     if (!user) {

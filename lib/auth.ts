@@ -32,10 +32,11 @@ export async function verifyPassword(
 export interface TokenPayload extends JWTPayload {
   sub: string;
   type: "access" | "refresh";
+  role?: string;
 }
 
-export async function createAccessToken(userId: string): Promise<string> {
-  return new SignJWT({ sub: userId, type: "access" })
+export async function createAccessToken(userId: string, role: string): Promise<string> {
+  return new SignJWT({ sub: userId, type: "access", role })
     .setProtectedHeader({ alg: ALGORITHM })
     .setExpirationTime(`${ACCESS_TOKEN_EXPIRE_MINUTES}m`)
     .sign(getSecretKey());
@@ -49,10 +50,11 @@ export async function createRefreshToken(userId: string): Promise<string> {
 }
 
 export async function createTokens(
-  userId: string
+  userId: string,
+  role: string
 ): Promise<{ accessToken: string; refreshToken: string }> {
   const [accessToken, refreshToken] = await Promise.all([
-    createAccessToken(userId),
+    createAccessToken(userId, role),
     createRefreshToken(userId),
   ]);
   return { accessToken, refreshToken };
