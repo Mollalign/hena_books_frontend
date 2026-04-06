@@ -7,6 +7,7 @@ import Link from "next/link";
 import { BookOpen, Calendar, Users, Clock, ArrowLeft, BookText, User, Tag } from "lucide-react";
 import { booksService, BookDetail, getCategoryLabel } from "@/lib/services/books";
 import { useAuth } from "@/context/AuthContext";
+import { useLanguage } from "@/context/LanguageContext";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
@@ -15,8 +16,10 @@ export default function BookDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const { language } = useLanguage();
   const [book, setBook] = useState<BookDetail | null>(null);
   const [loading, setLoading] = useState(true);
+  const t = (am: string, en: string) => language === "am" ? am : en;
 
   useEffect(() => {
     if (!params.id) return;
@@ -68,7 +71,7 @@ export default function BookDetailPage() {
             className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-5 transition-colors group"
           >
             <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-            Back to Books
+            {t("ወደ መጽሐፍት", "Back to Books")}
           </Link>
 
           <div className="grid md:grid-cols-2 gap-6 lg:gap-10 animate-fade-in">
@@ -104,13 +107,13 @@ export default function BookDetailPage() {
                   <div className="flex items-center gap-2 text-muted-foreground mb-2">
                     <User className="w-4 h-4 text-navy-500" />
                     <span>
-                      by <span className="font-medium text-foreground">{book.author}</span>
+                      {t("በ", "by")} <span className="font-medium text-foreground">{book.author}</span>
                     </span>
                   </div>
                 )}
                 {book.scripture_focus && (
                   <div className="scripture-quote py-2 mb-3 text-sm">
-                    📖 Scripture Focus: {book.scripture_focus}
+                    📖 {"Scripture Focus"}: {book.scripture_focus}
                   </div>
                 )}
                 {book.description && (
@@ -121,21 +124,21 @@ export default function BookDetailPage() {
               {/* Stats */}
               <div className="grid grid-cols-2 gap-3">
                 {book.page_count && (
-                  <StatCard icon={BookOpen} label="Pages" value={book.page_count} color="navy" />
+                  <StatCard icon={BookOpen} label={t("ገጾች", "Pages")} value={book.page_count} color="navy" />
                 )}
                 {book.published_date && (
                   <StatCard
                     icon={Calendar}
-                    label="Published"
+                    label={t("የታተመበት", "Published")}
                     value={new Date(book.published_date).getFullYear()}
                     color="gold"
                   />
                 )}
-                <StatCard icon={Users} label="Readers" value={book.total_readers || 0} color="navy" />
+                <StatCard icon={Users} label={t("አንባቢዎች", "Readers")} value={book.total_readers || 0} color="navy" />
                 <StatCard
                   icon={Clock}
-                  label="Reading Time"
-                  value={`${book.total_reading_time_hours.toFixed(1)}h`}
+                  label={t("የንባብ ጊዜ", "Reading Time")}
+                  value={`${book.total_reading_time_hours.toFixed(1)}${t("ሰ", "h")}`}
                   color="gold"
                 />
               </div>
@@ -156,15 +159,15 @@ export default function BookDetailPage() {
                 className="w-full text-base py-5 bg-navy-gradient text-white shadow-lg hover:shadow-xl transition-all active:scale-[0.98]"
               >
                 <BookOpen className="w-5 h-5 mr-2" />
-                {user ? "Read Now" : "Login to Read"}
+                {user ? t("አሁን ያንብቡ", "Read Now") : t("ለማንበብ ይግቡ", "Login to Read")}
               </Button>
 
               {!user && (
                 <p className="text-sm text-center text-muted-foreground">
                   <Link href={`/register?from=${encodeURIComponent(`/books/${params.id}/read`)}`} className="text-navy-500 hover:underline font-medium">
-                    Create an account
+                    {t("አካውንት ይፍጠሩ", "Create an account")}
                   </Link>{" "}
-                  to start reading
+                  {t("ማንበብ ለመጀመር", "to start reading")}
                 </p>
               )}
             </div>
