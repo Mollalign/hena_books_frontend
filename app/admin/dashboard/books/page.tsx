@@ -224,25 +224,24 @@ export default function AdminBooksPage() {
                 Upload Book
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-[calc(100%-1rem)] max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-4 sm:p-6 rounded-xl sm:rounded-lg">
+            <DialogContent className="w-[calc(100%-2rem)] max-w-lg max-h-[90dvh] overflow-y-auto p-4 sm:p-6 rounded-2xl">
               <DialogHeader>
-                <div className="flex items-center gap-2.5 sm:gap-3 mb-1 sm:mb-2">
-                  <div className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-gradient-to-br from-[var(--primary-500)] to-[var(--primary-600)] shadow-lg">
-                    <Upload className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-navy-gradient shadow">
+                    <Upload className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <DialogTitle className="text-lg sm:text-xl">Upload New Book</DialogTitle>
-                    <DialogDescription className="text-xs sm:text-sm">
+                    <DialogTitle className="text-base sm:text-lg">Upload New Book</DialogTitle>
+                    <DialogDescription className="text-xs">
                       Add a biblical resource to your library
                     </DialogDescription>
                   </div>
                 </div>
               </DialogHeader>
               
-              <form onSubmit={handleUpload} className="space-y-4 sm:space-y-6 pt-2 sm:pt-4">
-                {/* Title */}
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="title" className="text-sm font-semibold">
+              <form onSubmit={handleUpload} className="space-y-3 pt-2">
+                <div className="space-y-1">
+                  <Label htmlFor="title" className="text-xs font-semibold">
                     Book Title <span className="text-destructive">*</span>
                   </Label>
                   <Input
@@ -251,102 +250,85 @@ export default function AdminBooksPage() {
                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     placeholder="እግዚአብሔር ፍቅር ነው"
                     required
-                    className="h-10 sm:h-11"
+                    className="h-9 text-sm"
                   />
                 </div>
                 
-                {/* Author */}
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="author" className="text-sm font-semibold">Author</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="author" className="text-xs font-semibold">Author</Label>
                   <Input
                     id="author"
                     value={formData.author}
                     onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                    placeholder="henok tesfaye"
-                    className="h-10 sm:h-11"
+                    placeholder="ሄኖክ ተስፋዬ"
+                    className="h-9 text-sm"
                   />
                 </div>
                 
-                {/* Description */}
-                <div className="space-y-1.5 sm:space-y-2">
-                  <Label htmlFor="description" className="text-sm font-semibold">Description</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="description" className="text-xs font-semibold">Description</Label>
                   <textarea
                     id="description"
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Describe the book's content and spiritual value..."
-                    className="w-full min-h-[100px] sm:min-h-[120px] px-3 py-2.5 sm:py-3 border border-[var(--border)] rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-all resize-y"
+                    placeholder="የመጽሐፉ ይዘት..."
+                    className="w-full min-h-[80px] px-3 py-2 border border-[var(--border)] rounded-lg bg-background text-foreground text-sm focus:ring-2 focus:ring-[var(--primary-500)] focus:border-transparent transition-all resize-y"
                   />
                 </div>
                 
-                {/* Page Count & Published Date */}
-                <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="page_count" className="text-sm font-semibold">Page Count</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1">
+                    <Label htmlFor="page_count" className="text-xs font-semibold">Pages</Label>
                     <Input
                       id="page_count"
                       type="number"
                       value={formData.page_count}
                       onChange={(e) => setFormData({ ...formData, page_count: e.target.value })}
-                      placeholder="e.g., 250"
-                      className="h-10 sm:h-11"
+                      placeholder="250"
+                      className="h-9 text-sm"
                     />
                   </div>
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="published_date" className="text-sm font-semibold">Published Date</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor="published_date" className="text-xs font-semibold">Date</Label>
                     <Input
                       id="published_date"
                       type="date"
                       value={formData.published_date}
                       onChange={(e) => setFormData({ ...formData, published_date: e.target.value })}
-                      className="h-10 sm:h-11"
+                      className="h-9 text-sm"
                     />
                   </div>
                 </div>
                 
-                {/* File Uploads */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="book_file" className="text-sm font-semibold">
-                      PDF File <span className="text-destructive">*</span>
-                    </Label>
-                    <div className="relative">
-                      <Input
-                        id="book_file"
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) => setFormData({ ...formData, book_file: e.target.files?.[0] || null })}
-                        required
-                        className="h-10 sm:h-11 text-sm file:mr-3 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-[var(--primary-50)] file:text-[var(--primary-600)] hover:file:bg-[var(--primary-100)] dark:file:bg-[var(--primary-950)] dark:file:text-[var(--primary-400)]"
-                      />
-                    </div>
-                    {formData.book_file && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        Selected: {formData.book_file.name}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-1.5 sm:space-y-2">
-                    <Label htmlFor="cover_file" className="text-sm font-semibold">Cover Image</Label>
-                    <Input
-                      id="cover_file"
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setFormData({ ...formData, cover_file: e.target.files?.[0] || null })}
-                      className="h-10 sm:h-11 text-sm file:mr-3 sm:file:mr-4 file:py-1.5 sm:file:py-2 file:px-3 sm:file:px-4 file:rounded-lg file:border-0 file:text-sm file:bg-[var(--accent-50)] file:text-[var(--accent-600)] hover:file:bg-[var(--accent-100)] dark:file:bg-[var(--accent-950)] dark:file:text-[var(--accent-400)]"
-                    />
-                    {formData.cover_file && (
-                      <p className="text-xs text-muted-foreground truncate">
-                        Selected: {formData.cover_file.name}
-                      </p>
-                    )}
-                  </div>
+                <div className="space-y-1">
+                  <Label htmlFor="book_file" className="text-xs font-semibold">
+                    PDF File <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="book_file"
+                    type="file"
+                    accept=".pdf"
+                    onChange={(e) => setFormData({ ...formData, book_file: e.target.files?.[0] || null })}
+                    required
+                    className="h-9 text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:bg-navy-50 file:text-navy-600 dark:file:bg-navy-950 dark:file:text-navy-400"
+                  />
+                </div>
+                
+                <div className="space-y-1">
+                  <Label htmlFor="cover_file" className="text-xs font-semibold">Cover Image</Label>
+                  <Input
+                    id="cover_file"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setFormData({ ...formData, cover_file: e.target.files?.[0] || null })}
+                    className="h-9 text-xs file:mr-2 file:py-1 file:px-2.5 file:rounded-md file:border-0 file:text-xs file:bg-gold-50 file:text-gold-600 dark:file:bg-gold-950 dark:file:text-gold-400"
+                  />
                 </div>
                 
                 <Button 
                   type="submit" 
                   disabled={uploading} 
-                  className="w-full h-11 sm:h-12 bg-gradient-to-r from-[var(--primary-500)] to-[var(--primary-600)] hover:from-[var(--primary-600)] hover:to-[var(--primary-700)] text-white font-semibold shadow-lg"
+                  className="w-full h-10 bg-navy-gradient text-white font-semibold shadow-lg mt-2"
                 >
                   {uploading ? (
                     <>

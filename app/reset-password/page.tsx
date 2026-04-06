@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Loader2, Mail, Lock, KeyRound, ArrowLeft, CheckCircle } from "lucide-react";
+import { Loader2, Mail, Lock, KeyRound, ArrowLeft, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [codeVerified, setCodeVerified] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const form = useForm<z.infer<typeof resetPasswordSchema>>({
     resolver: zodResolver(resetPasswordSchema),
@@ -199,12 +201,17 @@ export default function ResetPasswordPage() {
                           New Password
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            type="password" 
-                            placeholder="••••••••" 
-                            className="h-11"
-                            {...field} 
-                          />
+                          <div className="relative">
+                            <Input 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="••••••••" 
+                              className="h-11 pr-11"
+                              {...field} 
+                            />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1" tabIndex={-1}>
+                              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </FormControl>
                         <FormDescription>
                           Must be at least 6 characters
@@ -223,12 +230,17 @@ export default function ResetPasswordPage() {
                           Confirm New Password
                         </FormLabel>
                         <FormControl>
-                          <Input 
-                            type="password" 
-                            placeholder="••••••••" 
-                            className="h-11"
-                            {...field} 
-                          />
+                          <div className="relative">
+                            <Input 
+                              type={showConfirm ? "text" : "password"} 
+                              placeholder="••••••••" 
+                              className="h-11 pr-11"
+                              {...field} 
+                            />
+                            <button type="button" onClick={() => setShowConfirm(!showConfirm)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1" tabIndex={-1}>
+                              {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            </button>
+                          </div>
                         </FormControl>
                         <FormMessage />
                       </FormItem>

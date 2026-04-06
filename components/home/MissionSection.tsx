@@ -59,7 +59,7 @@ export default function MissionSection() {
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-4">
             {language === "am" ? "ቤቱን ይጎብኙ" : "Follow Us"}
           </p>
-          <div className="flex justify-center gap-2.5">
+          <div className="flex flex-col sm:flex-row justify-center gap-2.5 max-w-xs sm:max-w-none mx-auto">
             {socialLinks.map((link) => {
               const Icon = link.icon;
               return (
@@ -68,7 +68,7 @@ export default function MissionSection() {
                   href={link.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 ${link.bg}`}
+                  className={`inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold shadow-sm hover:shadow-md transition-all active:scale-95 ${link.bg}`}
                 >
                   <Icon className="w-4 h-4" />
                   {link.name}
