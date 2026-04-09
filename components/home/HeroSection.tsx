@@ -41,7 +41,7 @@ export default function HeroSection({ stats }: Props) {
           </div>
 
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-[1.1] mb-5 tracking-tight">
-            {language === "am" ? "ብፅዕና መጽሐፍት" : "ብፅዕና መጽሐፍት"}
+            {language === "am" ? "ብፅዕና" : "ብፅዕና"}
             <span className="block mt-2 gradient-text-hero">
               {language === "am" ? "እንኳን በደኅና መጡ ።" : "Welcome !"}
             </span>

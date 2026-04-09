@@ -20,7 +20,7 @@ export default function Footer() {
         {/* Brand */}
         <div className="flex items-center gap-2 mb-6">
           <Image src="/logo.jpeg" alt="ብፅዕና" width={32} height={32} className="rounded-full" />
-          <span className="text-base font-bold">{language === "am" ? "ብፅዕና መጽሐፍት" : "ብፅዕና መጽሐፍት"}</span>
+          <span className="text-base font-bold">{language === "am" ? "ብፅዕና" : "ብፅዕና"}</span>
         </div>
 
         <p className="text-white/40 text-xs leading-relaxed mb-6 max-w-xs">
@@ -73,7 +73,7 @@ export default function Footer() {
       <div className="border-t border-white/10">
         <div className="container mx-auto px-4 py-3">
           <p className="flex items-center justify-center gap-1 text-[10px] text-white/30">
-            &copy; {new Date().getFullYear()} {language === "am" ? "ብፅዕና መጽሐፍት ።" : "ብፅዕና መጽሐፍት"} Made with <Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" /> for the glory of God.
+            &copy; {new Date().getFullYear()} {"ብፅዕና።"} Made with <Heart className="w-2.5 h-2.5 text-red-400 fill-red-400" /> for the glory of God.
           </p>
         </div>
       </div>

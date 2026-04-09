@@ -52,7 +52,7 @@ export default function AboutSection() {
               <>
                 <p>በዲላ አማኑኤል ሕብረት ቤተክርስቲያን የወንጌል ሥርጭት አገልጋይ ።</p>
                 <p>በአሁኑ ጊዜ የሐዋሳ ዩኒቨርስቲ ተማሪ ነው ።</p>
-                <p>በሐዋሳ ዩኒቨርስቲ( HU-Fello ) Evang team ያገለግላል ።</p>
+                <p>በሐዋሳ ዩኒቨርስቲ HU-Fello የወንጌል ሥርጭት (Evang) team ያገለግላል ።</p>
               </>
             ) : (
               <>
