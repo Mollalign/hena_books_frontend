@@ -1,22 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, Suspense, lazy } from "react";
+import { useState, useEffect, useRef, Suspense, lazy } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, AlertCircle, Maximize, Minimize, Download, Loader2, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
-import { booksService } from "@/lib/services/books";
+import { ArrowLeft, AlertCircle, Maximize, Minimize, Loader2 } from "lucide-react";
+import { booksService, type BookReadResponse } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
 import { useAuth } from "@/context/AuthContext";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { PdfViewerHandle } from "@/components/books/SecurePdfViewer";
 
-const SecurePdfViewer = lazy(() => import("@/components/books/SecurePdfViewer"));
+const ModernPdfViewer = lazy(() => import("@/components/books/ModernPdfViewer"));
 
 export default function BookReaderPage() {
   const params = useParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
-  const [bookData, setBookData] = useState<any>(null);
+  const [bookData, setBookData] = useState<BookReadResponse | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,20 +23,12 @@ export default function BookReaderPage() {
   const [readingTime, setReadingTime] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
-  const [currentScale, setCurrentScale] = useState(100);
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const pdfViewerRef = useRef<PdfViewerHandle>(null);
   const readingTimeRef = useRef(0);
   const currentPageRef = useRef(1);
   const sessionIdRef = useRef<string | number | null>(null);
-
-  const isAdmin = user?.role === "admin";
-
-  const handleScaleChange = useCallback((s: number) => {
-    setCurrentScale(Math.round(s * 100));
-  }, []);
 
   useEffect(() => {
     if (authLoading) return;
@@ -57,29 +47,7 @@ export default function BookReaderPage() {
         const data = await booksService.getBookForReading(params.id as string);
         if (!data.file_url) throw new Error("Book file URL is missing");
         setBookData(data);
-
-        const proxyUrl = `/api/v1/books/${params.id}/read/file`;
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-        const response = await fetch(proxyUrl, {
-          credentials: "include",
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            toast.error("Session expired. Please login again.");
-            router.push("/login");
-            return;
-          }
-          throw new Error(`Failed to load PDF (${response.status})`);
-        }
-
-        const arrayBuffer = await response.arrayBuffer();
-        const blob = new Blob([arrayBuffer], { type: "application/pdf" });
-        setPdfUrl(URL.createObjectURL(blob));
+        setPdfUrl(`/api/v1/books/${params.id}/read/file`);
 
         try {
           const progressRes = await fetch(`/api/v1/books/${params.id}/read/progress`, { credentials: "include" });
@@ -96,11 +64,11 @@ export default function BookReaderPage() {
         } catch {
           // session tracking is non-critical
         }
-      } catch (err: any) {
-        if (err.name === "AbortError") {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") {
           setError("Request timed out. Please try again.");
         } else {
-          setError(err.message || "Failed to load book");
+          setError(err instanceof Error ? err.message : "Failed to load book");
         }
       } finally {
         setLoading(false);
@@ -117,10 +85,6 @@ export default function BookReaderPage() {
   useEffect(() => { readingTimeRef.current = readingTime; }, [readingTime]);
   useEffect(() => { currentPageRef.current = currentPage; }, [currentPage]);
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
-
-  useEffect(() => {
-    return () => { if (pdfUrl) URL.revokeObjectURL(pdfUrl); };
-  }, [pdfUrl]);
 
   useEffect(() => {
     return () => {
@@ -207,30 +171,7 @@ export default function BookReaderPage() {
         </div>
 
         {/* Center: Zoom Controls */}
-        <div className="hidden sm:flex items-center gap-1 bg-stone-800/60 rounded-lg px-1 py-0.5">
-          <button
-            onClick={() => pdfViewerRef.current?.zoomOut()}
-            className="p-1.5 rounded hover:bg-stone-700 transition-colors"
-            aria-label="Zoom out"
-          >
-            <ZoomOut className="w-3.5 h-3.5 text-stone-400" />
-          </button>
-          <span className="text-[11px] text-stone-400 w-10 text-center tabular-nums">{currentScale}%</span>
-          <button
-            onClick={() => pdfViewerRef.current?.zoomIn()}
-            className="p-1.5 rounded hover:bg-stone-700 transition-colors"
-            aria-label="Zoom in"
-          >
-            <ZoomIn className="w-3.5 h-3.5 text-stone-400" />
-          </button>
-          <button
-            onClick={() => pdfViewerRef.current?.resetZoom()}
-            className="p-1.5 rounded hover:bg-stone-700 transition-colors"
-            aria-label="Reset zoom"
-          >
-            <RotateCcw className="w-3 h-3 text-stone-500" />
-          </button>
-        </div>
+        <div className="hidden sm:block flex-1" />
 
         {/* Right: Page info + Actions */}
         <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
@@ -242,22 +183,6 @@ export default function BookReaderPage() {
           <span className="text-[10px] text-stone-600 tabular-nums px-1 hidden sm:inline">
             {formatTime(readingTime)}
           </span>
-          {isAdmin && (
-            <button
-              onClick={() => {
-                if (pdfUrl && bookData) {
-                  const a = document.createElement("a");
-                  a.href = pdfUrl;
-                  a.download = `${bookData.title}.pdf`;
-                  a.click();
-                }
-              }}
-              className="p-1.5 sm:p-2 rounded-lg hover:bg-stone-800 transition-colors"
-              aria-label="Download"
-            >
-              <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-400" />
-            </button>
-          )}
           <button
             onClick={toggleFullscreen}
             className="p-1.5 sm:p-2 rounded-lg hover:bg-stone-800 transition-colors"
@@ -282,14 +207,12 @@ export default function BookReaderPage() {
               </div>
             }
           >
-            <SecurePdfViewer
-              ref={pdfViewerRef}
+            <ModernPdfViewer
+              bookId={params.id as string}
               pdfUrl={pdfUrl}
               title={bookData.title}
-              isAdmin={isAdmin}
               initialPage={initialPage}
               onPageChange={setCurrentPage}
-              onScaleChange={handleScaleChange}
               onLoadComplete={setTotalPages}
             />
           </Suspense>
