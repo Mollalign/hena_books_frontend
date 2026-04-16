@@ -19,11 +19,18 @@
   -webkit-user-select: text;
 }
 
-/* Annotation layer — non-interactive except links */
-.react-pdf__Page__annotations {
+/* Annotation layer — links must be tappable */
+.react-pdf__Page__annotations section {
   pointer-events: none;
 }
 
+.react-pdf__Page__annotations section a,
 .react-pdf__Page__annotations a {
   pointer-events: all;
+  cursor: pointer;
+}
+
+/* Ensure annotation layer sits above text layer for tap targets */
+.react-pdf__Page__annotations {
+  z-index: 5;
 }
