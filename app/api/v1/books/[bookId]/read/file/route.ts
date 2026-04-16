@@ -57,7 +57,7 @@ export async function GET(
       response.headers.get("Content-Disposition") ||
         `inline; filename="book.pdf"; filename*=UTF-8''${safeFilename}`
     );
-    headers.set("Cache-Control", "private, max-age=86400, stale-while-revalidate=604800");
+    headers.set("Cache-Control", "private, max-age=3600");
 
     const passthroughHeaders = [
       "Accept-Ranges",

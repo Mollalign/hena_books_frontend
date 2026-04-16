@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, AlertCircle, Maximize, Minimize, Loader2 } from "lucide-react";
 import { booksService, type BookReadResponse } from "@/lib/services/books";
 import { analyticsService } from "@/lib/services/analytics";
-import { highlightsService, type BookHighlight } from "@/lib/services/highlights";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 
@@ -25,13 +24,13 @@ export default function BookReaderPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [initialPage, setInitialPage] = useState<number | undefined>(undefined);
-  const [prefetchedHighlights, setPrefetchedHighlights] = useState<BookHighlight[] | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const readingTimeRef = useRef(0);
   const currentPageRef = useRef(1);
   const sessionIdRef = useRef<string | number | null>(null);
 
+  // Auto-hide header on scroll down (mobile)
   const [headerVisible, setHeaderVisible] = useState(true);
 
   const handlePageChangeFromViewer = useCallback((page: number) => {
@@ -47,64 +46,34 @@ export default function BookReaderPage() {
       return;
     }
 
-    const bookId = params.id as string;
-
     const loadBook = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Fire ALL requests in parallel instead of sequential waterfall
-        const [data, progressResult, highlightsResult, sessionResult] =
-          await Promise.allSettled([
-            booksService.getBookForReading(bookId),
-            fetch(`/api/v1/books/${bookId}/read/progress`, {
-              credentials: "include",
-            }).then((r) => (r.ok ? r.json() : null)),
-            highlightsService.list(bookId),
-            analyticsService.startSession({ book_id: bookId }),
-          ]);
+        const data = await booksService.getBookForReading(params.id as string);
+        if (!data.file_url) throw new Error("Book file URL is missing");
+        setBookData(data);
+        setPdfUrl(`/api/v1/books/${params.id}/read/file`);
 
-        // Book data (critical)
-        if (data.status === "rejected" || !data.value?.file_url) {
-          throw data.status === "rejected"
-            ? data.reason
-            : new Error("Book file URL is missing");
-        }
-        setBookData(data.value);
-        setPdfUrl(`/api/v1/books/${bookId}/read/file`);
+        try {
+          const progressRes = await fetch(`/api/v1/books/${params.id}/read/progress`, { credentials: "include" });
+          if (progressRes.ok) {
+            const { last_page_read } = await progressRes.json();
+            if (last_page_read > 1) setInitialPage(last_page_read);
+          }
+        } catch { /* non-critical */ }
 
-        // Progress (non-critical)
-        if (
-          progressResult.status === "fulfilled" &&
-          progressResult.value?.last_page_read > 1
-        ) {
-          setInitialPage(progressResult.value.last_page_read);
-        }
-
-        // Highlights (non-critical — pass to viewer to skip double fetch)
-        if (
-          highlightsResult.status === "fulfilled" &&
-          highlightsResult.value
-        ) {
-          setPrefetchedHighlights(highlightsResult.value);
-        }
-
-        // Session (non-critical)
-        if (sessionResult.status === "fulfilled" && sessionResult.value) {
-          setSessionId(sessionResult.value.id);
-          timerRef.current = setInterval(
-            () => setReadingTime((p) => p + 1),
-            1000
-          );
-        }
+        try {
+          const session = await analyticsService.startSession({ book_id: params.id as string });
+          setSessionId(session.id);
+          timerRef.current = setInterval(() => setReadingTime((p) => p + 1), 1000);
+        } catch { /* session tracking is non-critical */ }
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") {
           setError("Request timed out. Please try again.");
         } else {
-          setError(
-            err instanceof Error ? err.message : "Failed to load book"
-          );
+          setError(err instanceof Error ? err.message : "Failed to load book");
         }
       } finally {
         setLoading(false);
@@ -128,14 +97,9 @@ export default function BookReaderPage() {
       const time = readingTimeRef.current;
       const page = currentPageRef.current;
       if (sid) {
-        analyticsService.endSession(sid).catch(() => {});
+        analyticsService.endSession(sid).catch(() => { });
         if (time > 0) {
-          analyticsService
-            .updateProgress(sid, {
-              last_page_read: page,
-              time_spent_seconds: time,
-            })
-            .catch(() => {});
+          analyticsService.updateProgress(sid, { last_page_read: page, time_spent_seconds: time }).catch(() => { });
         }
       }
     };
@@ -143,12 +107,7 @@ export default function BookReaderPage() {
 
   useEffect(() => {
     if (sessionId && readingTime > 0 && readingTime % 30 === 0) {
-      analyticsService
-        .updateProgress(sessionId, {
-          last_page_read: currentPage,
-          time_spent_seconds: 30,
-        })
-        .catch(() => {});
+      analyticsService.updateProgress(sessionId, { last_page_read: currentPage, time_spent_seconds: 30 }).catch(() => { });
     }
   }, [sessionId, readingTime, currentPage]);
 
@@ -165,6 +124,7 @@ export default function BookReaderPage() {
     return () => document.removeEventListener("fullscreenchange", handler);
   }, []);
 
+  // Progress percentage
   const progress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
 
   if (authLoading || loading) {
@@ -204,12 +164,13 @@ export default function BookReaderPage() {
 
   return (
     <div ref={containerRef} className="h-dvh bg-stone-950 text-stone-200 flex flex-col overflow-hidden">
-      {/* Header */}
+      {/* Header — auto-hides on mobile scroll */}
       <header
         className={`flex items-center justify-between gap-2 px-3 sm:px-4 h-12 sm:h-13 bg-stone-950/95 border-b border-stone-800/50 shrink-0 z-50 transition-transform duration-200 ${
           headerVisible ? "translate-y-0" : "-translate-y-full"
         }`}
       >
+        {/* Left: Back + Title */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             onClick={() => router.push(`/books/${params.id}`)}
@@ -230,6 +191,7 @@ export default function BookReaderPage() {
           </div>
         </div>
 
+        {/* Right: Page info + Actions */}
         <div className="flex items-center gap-1.5 shrink-0">
           {totalPages > 0 && (
             <span className="text-[10px] sm:text-xs text-stone-500 tabular-nums px-1.5">
@@ -275,7 +237,6 @@ export default function BookReaderPage() {
               pdfUrl={pdfUrl}
               title={bookData.title}
               initialPage={initialPage}
-              initialHighlights={prefetchedHighlights ?? undefined}
               onPageChange={handlePageChangeFromViewer}
               onLoadComplete={setTotalPages}
             />

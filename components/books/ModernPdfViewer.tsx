@@ -6,7 +6,6 @@ import React, {
   useMemo,
   useRef,
   useState,
-  memo,
 } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useVirtualizer } from "@tanstack/react-virtual";
@@ -29,8 +28,7 @@ import {
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
 
-// Self-hosted worker — no CDN roundtrip, served from same origin with long cache
-pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 // ---------------------------------------------------------------------------
 
@@ -39,7 +37,6 @@ interface ModernPdfViewerProps {
   pdfUrl: string;
   title: string;
   initialPage?: number;
-  initialHighlights?: BookHighlight[];
   onPageChange?: (page: number) => void;
   onScaleChange?: (scale: number) => void;
   onLoadComplete?: (numPages: number) => void;
@@ -55,8 +52,6 @@ const HIGHLIGHT_COLORS = [
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 const A4_RATIO = 1.4142;
-const MOBILE_OVERSCAN = 1;
-const DESKTOP_OVERSCAN = 2;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -205,78 +200,6 @@ function useTextSelection(
 }
 
 // ---------------------------------------------------------------------------
-// Memoized page component — prevents re-renders of all pages when parent
-// state changes (zoom, highlight, etc). Only re-renders when its own props
-// (pageNumber, width, isMobile, highlights for THIS page) change.
-// ---------------------------------------------------------------------------
-
-interface PdfPageProps {
-  pageNumber: number;
-  width: number;
-  isMobile: boolean;
-  pageHighlights: BookHighlight[];
-  activeHighlightId: string | null;
-  onHighlightClick: (id: string) => void;
-}
-
-const PdfPage = memo(function PdfPage({
-  pageNumber,
-  width,
-  isMobile,
-  pageHighlights,
-  activeHighlightId,
-  onHighlightClick,
-}: PdfPageProps) {
-  return (
-    <div className="relative">
-      <Page
-        pageNumber={pageNumber}
-        width={width}
-        renderAnnotationLayer
-        renderTextLayer
-        loading={
-          <div
-            className="animate-pulse bg-neutral-800"
-            style={{
-              width,
-              height: width * A4_RATIO,
-              borderRadius: isMobile ? 0 : 6,
-            }}
-          />
-        }
-        className={isMobile ? "" : "rounded-md"}
-      />
-
-      {pageHighlights.map((h) =>
-        h.highlight_areas.map((area, ai) => (
-          <button
-            key={`${h.id}-${ai}`}
-            type="button"
-            title={h.note || h.quote}
-            onClick={() => onHighlightClick(h.id)}
-            className="absolute"
-            style={{
-              top: `${area.top}%`,
-              left: `${area.left}%`,
-              width: `${area.width}%`,
-              height: `${area.height}%`,
-              background: getHighlightTint(h.color),
-              border:
-                h.id === activeHighlightId
-                  ? `2px solid ${h.color}`
-                  : `1px solid ${h.color}50`,
-              borderRadius: 2,
-              cursor: "pointer",
-              pointerEvents: "auto",
-            }}
-          />
-        ))
-      )}
-    </div>
-  );
-});
-
-// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
@@ -285,7 +208,6 @@ export default function ModernPdfViewer({
   pdfUrl,
   title,
   initialPage,
-  initialHighlights,
   onPageChange,
   onScaleChange,
   onLoadComplete,
@@ -298,10 +220,8 @@ export default function ModernPdfViewer({
   const [zoomIndex, setZoomIndex] = useState(2);
   const zoom = ZOOM_STEPS[zoomIndex] ?? 1;
 
-  const [highlights, setHighlights] = useState<BookHighlight[]>(
-    initialHighlights ? sortHighlights(initialHighlights) : []
-  );
-  const [isLoadingHighlights, setIsLoadingHighlights] = useState(!initialHighlights);
+  const [highlights, setHighlights] = useState<BookHighlight[]>([]);
+  const [isLoadingHighlights, setIsLoadingHighlights] = useState(true);
   const [activeHighlightId, setActiveHighlightId] = useState<string | null>(null);
   const [isDeletingHighlight, setIsDeletingHighlight] = useState(false);
 
@@ -323,17 +243,6 @@ export default function ModernPdfViewer({
     !pendingText && !activeHighlightId
   );
 
-  // Pre-compute highlights by page for O(1) lookup during render
-  const highlightsByPage = useMemo(() => {
-    const map = new Map<number, BookHighlight[]>();
-    for (const h of highlights) {
-      const arr = map.get(h.page_index);
-      if (arr) arr.push(h);
-      else map.set(h.page_index, [h]);
-    }
-    return map;
-  }, [highlights]);
-
   // Measure container
   useEffect(() => {
     const el = scrollRef.current;
@@ -353,6 +262,7 @@ export default function ModernPdfViewer({
     [onLoadComplete]
   );
 
+  // On mobile: full-bleed pages. On desktop: slight padding, max 960px.
   const pageGap = isMobile ? 4 : 12;
 
   const pageWidth = useMemo(() => {
@@ -372,16 +282,20 @@ export default function ModernPdfViewer({
     count: numPages,
     getScrollElement: () => scrollRef.current,
     estimateSize: () => estimatedPageHeight,
-    overscan: isMobile ? MOBILE_OVERSCAN : DESKTOP_OVERSCAN,
+    overscan: 2,
   });
 
+  // Use a ref-based callback so react-pdf's stale viewer closure
+  // always invokes the latest handler with current virtualizer/numPages.
+  const handleItemClickRef = useRef((_args: { pageNumber: number }) => {});
+  handleItemClickRef.current = ({ pageNumber }: { pageNumber: number }) => {
+    if (pageNumber >= 1 && pageNumber <= numPages) {
+      virtualizer.scrollToIndex(pageNumber - 1, { align: "start" });
+    }
+  };
   const handleItemClick = useCallback(
-    ({ pageNumber }: { pageNumber: number }) => {
-      if (pageNumber >= 1 && pageNumber <= numPages) {
-        virtualizer.scrollToIndex(pageNumber - 1, { align: "start" });
-      }
-    },
-    [numPages, virtualizer]
+    (args: { pageNumber: number }) => handleItemClickRef.current(args),
+    []
   );
 
   const hasScrolledToInitial = useRef(false);
@@ -392,36 +306,31 @@ export default function ModernPdfViewer({
     }
   }, [numPages, initialPage, virtualizer]);
 
-  // Page tracking (throttled via rAF for smooth scrolling)
+  // Page tracking
   const pageChangeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastReportedPage = useRef(0);
   const onPageChangeRef = useRef(onPageChange);
   onPageChangeRef.current = onPageChange;
-  const rafId = useRef(0);
 
   const computeCurrentPage = useCallback(() => {
-    if (rafId.current) return;
-    rafId.current = requestAnimationFrame(() => {
-      rafId.current = 0;
-      const items = virtualizer.getVirtualItems();
-      if (items.length === 0) return;
-      const scrollEl = scrollRef.current;
-      if (!scrollEl) return;
-      const viewportMiddle = scrollEl.scrollTop + scrollEl.clientHeight / 2;
-      let closest = items[0];
-      let minDist = Infinity;
-      for (const item of items) {
-        const dist = Math.abs(item.start + item.size / 2 - viewportMiddle);
-        if (dist < minDist) { minDist = dist; closest = item; }
-      }
-      const page = closest.index + 1;
-      if (page !== lastReportedPage.current) {
-        lastReportedPage.current = page;
-        setCurrentPage(page);
-        if (pageChangeTimer.current) clearTimeout(pageChangeTimer.current);
-        pageChangeTimer.current = setTimeout(() => onPageChangeRef.current?.(page), 150);
-      }
-    });
+    const items = virtualizer.getVirtualItems();
+    if (items.length === 0) return;
+    const scrollEl = scrollRef.current;
+    if (!scrollEl) return;
+    const viewportMiddle = scrollEl.scrollTop + scrollEl.clientHeight / 2;
+    let closest = items[0];
+    let minDist = Infinity;
+    for (const item of items) {
+      const dist = Math.abs(item.start + item.size / 2 - viewportMiddle);
+      if (dist < minDist) { minDist = dist; closest = item; }
+    }
+    const page = closest.index + 1;
+    if (page !== lastReportedPage.current) {
+      lastReportedPage.current = page;
+      setCurrentPage(page);
+      if (pageChangeTimer.current) clearTimeout(pageChangeTimer.current);
+      pageChangeTimer.current = setTimeout(() => onPageChangeRef.current?.(page), 150);
+    }
   }, [virtualizer]);
 
   const zoomIn = useCallback(() => {
@@ -442,7 +351,8 @@ export default function ModernPdfViewer({
     computeCurrentPage();
   }, [isMobile, computeCurrentPage]);
 
-  // Intercept internal PDF link clicks for virtualized scrolling
+  // External links → open in new tab. Internal links (TOC, cross-refs) are
+  // handled by react-pdf's LinkService which calls our onItemClick prop.
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -454,43 +364,18 @@ export default function ModernPdfViewer({
       const href = anchor.getAttribute("href");
       if (!href) return;
 
-      if (href.startsWith("#")) {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const pageMatch = href.match(/page=(\d+)/i);
-        if (pageMatch) {
-          const targetPage = parseInt(pageMatch[1], 10);
-          if (targetPage >= 1 && targetPage <= numPages) {
-            virtualizer.scrollToIndex(targetPage - 1, { align: "start" });
-          }
-          return;
-        }
-
-        const destPage = anchor.getAttribute("data-page-number")
-          || anchor.closest("[data-page-number]")?.getAttribute("data-page-number");
-        if (destPage) {
-          const idx = parseInt(destPage, 10) - 1;
-          if (idx >= 0 && idx < numPages) {
-            virtualizer.scrollToIndex(idx, { align: "start" });
-          }
-        }
-        return;
-      }
-
       if (href.startsWith("http://") || href.startsWith("https://")) {
         e.preventDefault();
         window.open(href, "_blank", "noopener,noreferrer");
       }
     };
 
-    container.addEventListener("click", handleLinkClick, true);
-    return () => container.removeEventListener("click", handleLinkClick, true);
-  }, [numPages, virtualizer]);
+    container.addEventListener("click", handleLinkClick);
+    return () => container.removeEventListener("click", handleLinkClick);
+  }, []);
 
-  // Load highlights only if not prefetched by parent
+  // Highlights
   useEffect(() => {
-    if (initialHighlights) return;
     let ignore = false;
     (async () => {
       try {
@@ -501,15 +386,11 @@ export default function ModernPdfViewer({
       finally { if (!ignore) setIsLoadingHighlights(false); }
     })();
     return () => { ignore = true; };
-  }, [bookId, initialHighlights]);
+  }, [bookId]);
 
   const activeHighlight = activeHighlightId
     ? (highlights.find((h) => h.id === activeHighlightId) ?? null)
     : null;
-
-  const handleHighlightClick = useCallback((id: string) => {
-    setActiveHighlightId(id);
-  }, []);
 
   const openComposer = useCallback(() => {
     if (!selection) return;
@@ -525,48 +406,25 @@ export default function ModernPdfViewer({
     setDraftColor(HIGHLIGHT_COLORS[0].value);
   }, []);
 
-  // Optimistic highlight save — close the sheet immediately, show result via toast
   const saveHighlight = useCallback(async () => {
     if (!pendingText) return;
-
-    const payload = {
-      page_index: pendingText.pageIndex,
-      color: draftColor,
-      quote: pendingText.text,
-      note: draftNote.trim() || undefined,
-      highlight_areas: pendingText.areas.map((a) => ({
-        pageIndex: a.pageIndex, top: a.top, left: a.left, width: a.width, height: a.height,
-      })),
-    };
-
-    // Optimistic: create a temporary local highlight and close the sheet
-    const optimisticId = `optimistic-${Date.now()}`;
-    const optimisticHighlight: BookHighlight = {
-      id: optimisticId,
-      book_id: bookId,
-      page_index: payload.page_index,
-      color: payload.color,
-      quote: payload.quote,
-      note: payload.note ?? null,
-      highlight_areas: payload.highlight_areas,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-
-    setHighlights((cur) => sortHighlights([...cur, optimisticHighlight]));
-    closeComposer();
-    toast.success("Highlight saved");
-
     try {
       setIsSavingHighlight(true);
+      const payload = {
+        page_index: pendingText.pageIndex,
+        color: draftColor,
+        quote: pendingText.text,
+        note: draftNote.trim() || undefined,
+        highlight_areas: pendingText.areas.map((a) => ({
+          pageIndex: a.pageIndex, top: a.top, left: a.left, width: a.width, height: a.height,
+        })),
+      };
       const created = await highlightsService.create(bookId, payload);
-      // Replace optimistic entry with real server response
-      setHighlights((cur) =>
-        sortHighlights(cur.map((h) => (h.id === optimisticId ? created : h)))
-      );
+      setHighlights((cur) => sortHighlights([...cur, created]));
+      setActiveHighlightId(created.id);
+      closeComposer();
+      toast.success("Highlight saved");
     } catch (err: unknown) {
-      // Rollback optimistic update
-      setHighlights((cur) => cur.filter((h) => h.id !== optimisticId));
       let detail: string | undefined;
       if (err && typeof err === "object" && "response" in err) {
         detail = (err as { response?: { data?: { detail?: string } } }).response?.data?.detail;
@@ -577,21 +435,13 @@ export default function ModernPdfViewer({
 
   const deleteHighlight = useCallback(async () => {
     if (!activeHighlight) return;
-    const deletingId = activeHighlight.id;
-
-    // Optimistic delete
-    setHighlights((cur) => cur.filter((h) => h.id !== deletingId));
-    setActiveHighlightId(null);
-    toast.success("Highlight removed");
-
     try {
       setIsDeletingHighlight(true);
-      await highlightsService.remove(bookId, deletingId);
-    } catch {
-      // Rollback: re-add
-      setHighlights((cur) => sortHighlights([...cur, activeHighlight]));
-      toast.error("Failed to remove highlight");
-    }
+      await highlightsService.remove(bookId, activeHighlight.id);
+      setHighlights((cur) => cur.filter((h) => h.id !== activeHighlight.id));
+      setActiveHighlightId(null);
+      toast.success("Highlight removed");
+    } catch { toast.error("Failed to remove highlight"); }
     finally { setIsDeletingHighlight(false); }
   }, [activeHighlight, bookId]);
 
@@ -610,8 +460,6 @@ export default function ModernPdfViewer({
 
   const hasOverlay = !!pendingText || !!activeHighlight || showHighlightsPanel;
   const showToolbar = showControls && !hasOverlay && !selection;
-
-  const EMPTY_HIGHLIGHTS: BookHighlight[] = [];
 
   return (
     <div
@@ -669,16 +517,56 @@ export default function ModernPdfViewer({
                   className="flex justify-center"
                   style={{ padding: `${pageGap / 2}px 0` }}
                 >
-                  <PdfPage
-                    pageNumber={vRow.index + 1}
-                    width={pageWidth}
-                    isMobile={isMobile}
-                    pageHighlights={highlightsByPage.get(vRow.index) ?? EMPTY_HIGHLIGHTS}
-                    activeHighlightId={activeHighlightId}
-                    onHighlightClick={handleHighlightClick}
-                  />
+                  <div className="relative">
+                    <Page
+                      pageNumber={vRow.index + 1}
+                      width={pageWidth}
+                      renderAnnotationLayer
+                      renderTextLayer
+                      loading={
+                        <div
+                          className="animate-pulse bg-neutral-800"
+                          style={{
+                            width: pageWidth,
+                            height: pageWidth * A4_RATIO,
+                            borderRadius: isMobile ? 0 : 6,
+                          }}
+                        />
+                      }
+                      className={isMobile ? "" : "rounded-md"}
+                    />
+
+                    {highlights
+                      .filter((h) => h.page_index === vRow.index)
+                      .map((h) =>
+                        h.highlight_areas.map((area, ai) => (
+                          <button
+                            key={`${h.id}-${ai}`}
+                            type="button"
+                            title={h.note || h.quote}
+                            onClick={() => setActiveHighlightId(h.id)}
+                            className="absolute"
+                            style={{
+                              top: `${area.top}%`,
+                              left: `${area.left}%`,
+                              width: `${area.width}%`,
+                              height: `${area.height}%`,
+                              background: getHighlightTint(h.color),
+                              border:
+                                h.id === activeHighlightId
+                                  ? `2px solid ${h.color}`
+                                  : `1px solid ${h.color}50`,
+                              borderRadius: 2,
+                              cursor: "pointer",
+                              pointerEvents: "auto",
+                            }}
+                          />
+                        ))
+                      )}
+                  </div>
                 </div>
 
+                {/* Tiny page number between pages (mobile) */}
                 {isMobile && (
                   <p className="pb-0.5 text-center text-[10px] tabular-nums text-neutral-600">
                     {vRow.index + 1}
@@ -757,10 +645,11 @@ export default function ModernPdfViewer({
         <>
           <div className="fixed inset-0 z-40 bg-black/60" onClick={closeComposer} />
 
-          <div className="fixed inset-x-0 bottom-0 z-50 sm:inset-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[400px] sm:-translate-x-1/2 sm:-translate-y-1/2">
+          <div className="fixed inset-x-0 bottom-0 z-50 sm:inset-auto sm:bottom-auto sm:left-1/2 sm:top-1/2 sm:w-[400px] sm:-translate-x-1/2 sm:-translate-y-1/2 animate-in slide-in-from-bottom duration-200">
             <div className="rounded-t-3xl bg-neutral-950 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] sm:rounded-3xl sm:p-6 sm:pb-6 border-t border-neutral-800 sm:border">
               <div className="mx-auto mb-5 h-1 w-8 rounded-full bg-neutral-700 sm:hidden" />
 
+              {/* Header */}
               <div className="flex items-center justify-between">
                 <p className="text-[13px] font-semibold text-neutral-100">
                   New Highlight
@@ -775,12 +664,14 @@ export default function ModernPdfViewer({
                 </button>
               </div>
 
+              {/* Selected text */}
               <div className="mt-3 rounded-2xl bg-neutral-900 px-4 py-3">
                 <p className="line-clamp-3 text-[13px] leading-relaxed text-neutral-300 italic">
                   &ldquo;{pendingText.text}&rdquo;
                 </p>
               </div>
 
+              {/* Color picker */}
               <div className="mt-4 flex items-center justify-center gap-4">
                 {HIGHLIGHT_COLORS.map((c) => (
                   <button
@@ -802,6 +693,7 @@ export default function ModernPdfViewer({
                 ))}
               </div>
 
+              {/* Note input */}
               <textarea
                 className="mt-4 h-16 w-full resize-none rounded-2xl bg-neutral-900 px-4 py-3 text-[13px] text-neutral-100 placeholder:text-neutral-600 focus:outline-none focus:ring-1 focus:ring-amber-500/50"
                 placeholder="Add a note (optional)..."
@@ -810,6 +702,7 @@ export default function ModernPdfViewer({
                 onChange={(e) => setDraftNote(e.target.value)}
               />
 
+              {/* Actions */}
               <div className="mt-4 flex gap-3">
                 <button
                   type="button"
@@ -911,6 +804,7 @@ export default function ModernPdfViewer({
             <div className="flex max-h-[70dvh] flex-col rounded-t-3xl bg-neutral-950 pt-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:rounded-3xl sm:pt-5 border-t border-neutral-800 sm:border">
               <div className="mx-auto mb-4 h-1 w-8 rounded-full bg-neutral-700 sm:hidden" />
 
+              {/* Panel header */}
               <div className="flex items-center justify-between px-5 pb-3">
                 <div className="flex items-center gap-2">
                   <NotebookPen className="h-4 w-4 text-amber-400" />
@@ -930,6 +824,7 @@ export default function ModernPdfViewer({
                 </button>
               </div>
 
+              {/* Scrollable list */}
               <div className="flex-1 overflow-y-auto px-4 pb-2">
                 {highlights.length === 0 ? (
                   <div className="py-10 text-center">
@@ -950,6 +845,7 @@ export default function ModernPdfViewer({
                         }}
                         className="group w-full rounded-2xl bg-neutral-900/80 p-3.5 text-left transition active:bg-neutral-800"
                       >
+                        {/* Color bar + quote */}
                         <div className="flex gap-3">
                           <div
                             className="mt-0.5 h-full w-1 shrink-0 rounded-full"
