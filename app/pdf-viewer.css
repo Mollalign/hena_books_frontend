@@ -1,0 +1,30 @@
+/*
+ * PDF Viewer — minimal overrides for dark-theme reading.
+ * Text layer styling is handled entirely by react-pdf's built-in TextLayer.css.
+ * Do NOT override .textLayer or canvas dimensions here.
+ */
+
+/* Selection highlight color (amber to match app theme) */
+.textLayer ::selection {
+  background: rgba(250, 204, 21, 0.4);
+}
+
+.textLayer ::-moz-selection {
+  background: rgba(250, 204, 21, 0.4);
+}
+
+/* Ensure text layer is selectable on all platforms */
+.textLayer {
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+/* Annotation layer sits above text layer so links are tappable */
+.annotationLayer {
+  z-index: 5;
+}
+
+/* Make link annotations clearly tappable on mobile */
+.annotationLayer a {
+  cursor: pointer;
+}

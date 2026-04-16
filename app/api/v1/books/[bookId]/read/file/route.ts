@@ -21,9 +21,16 @@ export async function GET(
 
     console.log("[pdf-proxy] Fetching:", book.file_url);
 
+    const rangeHeader = request.headers.get("range");
+    const upstreamHeaders = new Headers();
+    if (rangeHeader) {
+      upstreamHeaders.set("Range", rangeHeader);
+    }
+
     let response: Response;
     try {
       response = await fetch(book.file_url, {
+        headers: upstreamHeaders,
         signal: AbortSignal.timeout(30000),
       });
     } catch (fetchErr) {
@@ -43,13 +50,35 @@ export async function GET(
     }
 
     const safeFilename = encodeURIComponent(`${book.title}.pdf`);
+    const headers = new Headers();
+    headers.set("Content-Type", response.headers.get("Content-Type") || "application/pdf");
+    headers.set(
+      "Content-Disposition",
+      response.headers.get("Content-Disposition") ||
+        `inline; filename="book.pdf"; filename*=UTF-8''${safeFilename}`
+    );
+    headers.set("Cache-Control", "private, max-age=3600");
+
+    const passthroughHeaders = [
+      "Accept-Ranges",
+      "Content-Length",
+      "Content-Range",
+      "ETag",
+      "Last-Modified",
+    ];
+
+    passthroughHeaders.forEach((headerName) => {
+      const value = response.headers.get(headerName);
+      if (value) headers.set(headerName, value);
+    });
+
+    if (!headers.has("Accept-Ranges")) {
+      headers.set("Accept-Ranges", "bytes");
+    }
 
     return new Response(response.body, {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="book.pdf"; filename*=UTF-8''${safeFilename}`,
-        "Cache-Control": "private, max-age=3600",
-      },
+      status: response.status,
+      headers,
     });
   } catch (error) {
     return handleApiError(error);

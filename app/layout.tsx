@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { QueryProvider } from "@/context/QueryProvider";
 import { LanguageProvider } from "@/context/LanguageContext";
 import "./globals.css";
+import "./pdf-viewer.css";
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
